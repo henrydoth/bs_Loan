@@ -1,0 +1,223 @@
+---
+title: "Luận văn Thạc sỹ"
+author: "Bs Loan "
+format:
+    docx:
+      toc: false
+      number-sections: false
+      fig-dpi: 300          # optional for PNG fallback
+      dev: dml              # chèn ggplot dạng vector
+      reference-doc: "source/sstt_dtcs_quato_words_input.docx"
+      fig-align: center
+      
+
+#bibliography: sstt_reference.bib
+bibliography: "source/lvts_bsloan.bib"
+csl: "source/ama-brackets-collapsed-range.csl"
+lang: vi
+language:
+  labels:
+    fig: Hình
+editor: source
+---
+
+
+
+```{r}
+#| include: false
+# thư viện
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(
+  dplyr, tidyr, forcats, haven,
+  ggplot2, lubridate, glue, flextable,
+  officer, officedown, jpeg, png, grid,
+  tidyverse, purrr, RColorBrewer, emo, janitor, effectsize, patchwork, scale, stringr
+)
+```
+
+```{r thiết_lập_mặc_định, include=FALSE}
+# 📦 Thiết lập mặc định cho flextable
+set_flextable_defaults(
+  font.family = "Times New Roman",
+  font.size = 11,
+  align = "center",
+  padding = 3,
+  theme_fun = theme_booktabs,
+  layout = "autofit",
+  width = 1,
+  decimal.mark = ",",     # ✅ Dấu phẩy kiểu Việt
+  big.mark = ".",         # ✅ Ngăn cách hàng nghìn
+  na_str = "-"            # ✅ Hiển thị NA là "-"
+)
+
+# 🎨 Thiết lập theme ggplot2 toàn cục
+theme_set(
+  theme_minimal(base_family = "Times New Roman") +
+    theme(
+      text = element_text(family = "Times New Roman"),
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+      axis.title = element_text(size = 12),
+      axis.text = element_text(size = 11),
+      legend.text = element_text(size = 11),
+      legend.title = element_text(size = 11),
+      strip.text = element_text(size = 12)
+    )
+)
+
+# 📊 Thiết lập chunk mặc định cho biểu đồ
+knitr::opts_chunk$set(
+  fig.align = "center",   # ✅ Căn giữa
+  out.width = "100%",     # ✅ Fit chiều ngang Word
+  fig.asp = 0.618
+)
+
+# 🔧 Các tùy chọn R chung
+options(OutDec = ",")     # ✅ Dấu phẩy cho số thập phân
+
+# 🎨 Ghi đè palette mặc định
+scale_color_discrete <- function(...) scale_color_brewer(palette = "Set1", ...)
+scale_fill_discrete  <- function(...) scale_fill_brewer(palette = "Pastel2", ...)
+```
+
+```{r}
+#| include: false
+ft_vn <- function(df) {
+  flextable(df) %>%
+    colformat_num(decimal.mark = ",", big.mark = ".", na_str = "-") %>%
+    autofit()
+}
+
+```
+
+```{r}
+#| label: to màu canh cho văn bản
+#| include: false
+# Hàm tô màu xanh cho văn bản inline Word
+text_blue <- function(text) {
+  ftext(
+    text,
+    fp_text_lite(
+      color = "blue",
+      font.family = "Times New Roman"
+    )
+  )
+}
+```
+
+```{r}
+#| include: false
+
+current_datetime <- now()
+
+thu <- c("CHỦ NHẬT", "THỨ 2", "THỨ 3", "THỨ 4", "THỨ 5", "THỨ 6", "THỨ 7")[wday(current_datetime)]
+
+# Giờ 12h có AM/PM, sau đó dịch sang tiếng Việt
+gio <- format(current_datetime, "%I:%M %p") %>%
+  str_replace("AM", "sáng") %>%
+  str_replace("PM", "chiều")
+
+ngay <- day(current_datetime)
+thang <- month(current_datetime)
+nam <- year(current_datetime)
+
+formatted_datetime <- glue("{gio}, {thu}, NGÀY {ngay} THÁNG {thang} NĂM {nam}")
+
+```
+
+::: {custom-style="CAN GIUA DAM 14 ONE"}
+LỜI NÓI ĐẦU
+:::
+xin cảm ơn TS TRần Công Thắng
+
+TP Hồ Chí Minh: `r formatted_datetime`
+
+# MÃ LỆNH
+
+Dữ liệu 
+
+
+
+
+::: {custom-style="CAN GIUA DAM 14 ONE"}
+ĐẶT VẤN ĐỀ
+:::
+
+Hiện nay, tình trạng già hoá dân số đang là một trong những vấn đề được quan tâm hàng đầu tại các quốc gia, điều này đã dẫn đến sự gia tăng các bệnh lý không lây nhiễm và thoái hoá, trong đó có sa sút trí tuệ (SSTT) là một bệnh lý thoái hoá thần kinh khá thường gặp ở người cao tuổi. Theo thống kê của Tổ chức Y tế thế giới (WHO), ước tính đến năm 2023 số người mắc sa sút trí tuệ trên toàn cầu đạt xấp xỉ 55 triệu người, 60% trong số đó thuộc về các quốc gia có thu nhập thấp và trung bình1. Việt Nam là một trong những quốc gia thuộc nhóm thu nhập trung bình thấp (LMICs) và có tốc độ già hoá dân số nhanh trên thế giới, những người từ 60 tuổi trở lên chiếm 11,9% vào năm 2019 và dự đoán sẽ tăng trên 25% vào năm 2050 theo số liệu của Quỹ Dân số Liên Hợp Quốc2. Tại Việt Nam, một số nghiên cứu trong cộng đồng cho thấy tỉ lệ mắc sa sút trí tuệ dao động trong khoảng 4,5 – 7,9% trong quần thể người cao tuổi3,4. Tại Hội nghị Quốc gia Việt Nam về vấn đề sa sút trí tuệ lần thứ 1 đã đưa ra thống kê có khoảng 660,000 người Việt Nam mắc sa sút trí tuệ năm 2015 và đến năm 2030 con số này có thể lên đến 1,2 triệu người5.
+Việc gia tăng số người mắc sa sút trí tuệ đặt ra một thách thức không nhỏ đối với người chăm sóc (NCS) cho các bệnh nhân này, không chỉ về mặt kinh tế mà còn là các gánh nặng về mặt thể chất và tinh thần. Năm 2019, việc chi tiêu chăm sóc cho người bệnh sa sút trí tuệ gây tiêu tốn cho nền kinh tế toàn cầu khoảng 1,3 nghìn tỉ đô-la Mỹ, khoảng 50% chi phí này là đến từ những NCS (thành viên gia đình, bạn bè,…)1. Tại Việt Nam, năm 2015 ước tính đã chi khoảng 960 triệu đô-la Mỹ cho người bệnh sa sút trí tuệ, trong tương lai, nếu không có kế hoạch cụ thể để nâng cao chất lượng chăm sóc cho người bệnh sa sút trí tuệ, số tiền phải chi trả khoảng 1,75 tỷ đô-la Mỹ vào năm 2030 (trong đó những NCS phải gánh khoảng 60% chi phí này)5. Hiện nay, nhận thấy chưa có nhiều các chương trình tập huấn, hỗ trợ NCS người bệnh sa sút trí tuệ, hầu hết các đối tượng này đều không có kinh nghiệm chuyên môn mà đa phần đều là các kinh nghiệm cá nhân, tự phát trong quá trình sinh hoạt hàng ngày, do đó họ gặp không ít khó khăn và
+ 
+
+
+
+
+trở ngại trong việc chăm sóc và theo dõi người bệnh. Có rất nhiều NCS khi được khảo sát cho thấy họ rất cần được biết thêm nhiều thông tin về bệnh lý sa sút trí tuệ, cũng như cần được hỗ trợ về mặt tinh thần trong quá trình chăm sóc cho người bệnh. Nghiên cứu của Nguyễn Ngọc Ánh, Đỗ Thị Khánh Hỷ (2021)6 cho thấy có 57,7% trường hợp NCS có gánh nặng ở mức độ nghiêm trọng và rất nghiêm trọng theo thang điểm Zarit và những gánh nặng này có xu hướng tăng dần có ý nghĩa thống kê theo thời gian chăm sóc, giai đoạn bệnh và sự xuất hiện các triệu chứng của bệnh nhân. Tuy nhiên hiện nay, vẫn chưa có nhiều các công trình nghiên cứu trên đối tượng NCS người bệnh sa sút trí tuệ, mà việc quan tâm, chăm sóc đối tượng này là một thách thức không nhỏ đối với bản thân, gia đình và cộng đồng. Chính vì những lí do trên mà nhóm nghiên cứu chúng tôi luôn trăn trở về câu hỏi “Làm sao để có thể xây dựng được một hướng dẫn về việc chăm sóc cho người bệnh sa sút trí tuệ tại nhà một cách hiệu quả và khoa học?”. Và để trả lời cho câu hỏi này chúng tôi muốn tiến hành “Đánh giá kinh nghiệm chăm sóc người bệnh sa sút trí tuệ tại nhà ở Việt Nam” với 2 mục tiêu như sau:
+1.	Khảo sát mối liên quan giữa mức độ nặng của người bệnh sa sút trí tuệ với gánh nặng của người chăm sóc.
+2.	Phân tích kinh nghiệm chăm sóc người bệnh sa sút trí tuệ tại nhà ở Việt Nam.
+
+**Mục tiêu:**
+
+1. Khảo sát mối liên quan giữa mức độ nặng của người bệnh sa sút trí tuệ với gánh nặng của người chăm sóc.
+
+2. Phân tích kinh nghiệm chăm sóc người bệnh sa sút trí tuệ tại nhà ở Việt Nam.
+
+# TỔNG QUANG TÀI LIỆU
+
+Thuật ngữ sa sút trí tuệ “dementia” bắt nguồn từ một từ Latin là “demens” nghĩa là mất trí nhớ, và đã được sử dụng từ thế kỷ thứ 13 và xuất hiện trong cộng đồng y khoa vào thế kỷ thứ 18 trong quyển sách “Từ điển y học (Physical Dictionary)” của Blancard vào năm 17267.
+Thế kỷ thứ 19, thuật ngữ sa sút trí tuệ được đưa ra trước giới y khoa bởi nhà tâm thần học nổi tiếng Philippe Pinel (1745 – 1826) vào năm 1806. Trước khi Philippe Pinel thực hiện cải cách nhân đạo, những người mắc chứng suy giảm trí nhớ đều bị giam cầm và sống trong điều kiện khắc nghiệt. Ông đã thành công trong việc thành lập các nhà thương điên thay cho nhà tù và kiên quyết ủng hộ những tiếp cận khoa học trong lĩnh vực sa sút trí tuệ tại Pháp và trên toàn thế giới7.
+2.1.	Thiết kế nghiên cứu
+-	Mục tiêu 1: Nghiên cứu mô tả, cắt ngang
+-	Mục tiêu 2: Nghiên cứu định tính
+2.2.	Thời gian và địa điểm nghiên cứu
+-	Thời gian nghiên cứu: từ 11/2024 đến 06/2025
+-	Địa điểm nghiên cứu: Đơn vị Trí nhớ và Sa sút trí tuệ Bệnh viện Đại học Y Dược Thành phố Hồ Chí Minh và Bệnh viện 30-4.
+2.3.	Đối tượng nghiên cứu
+2.3.1.	Dân số mục tiêu
+Người bệnh sa sút trí tuệ và người chăm sóc người bệnh sa sút trí tuệ đang điều trị ngoại trú tại Bệnh viện Đại học Y Dược Thành phố Hồ Chí Minh và Bệnh viện 30-4.
+2.3.2.	Dân số chọn mẫu
+Người bệnh sa sút trí tuệ và người chăm sóc người bệnh sa sút trí tuệ đang điều trị ngoại trú tại Đơn vị Trí nhớ và Sa sút trí tuệ tại Bệnh viện Đại học Y Dược Thành phố Hồ Chí Minh và Bệnh viện 30-4 từ 11/2024 - 06/2025.
+
+
+
+
+
+
+
+
+# KẾT QUẢ NGHIÊN CỨU
+
+Có  98 người đượ
+# BÀN LUẬN
+
+
+
+## Đặc điểm mẫu của nghiên cứu
+
+### Đặc điểm theo Tuổi
+
+
+Kết quả nghiên cứu cho thấy cả hai nhóm can 
+
+
+
+
+::: {custom-style="CAN GIUA DAM 14 ONE"}
+KẾT LUẬN
+:::
+
+::: {custom-style="CAN GIUA DAM 14 ONE"}
+KHUYẾN NGHỊ
+:::
+
+
+Từ kết quả của công trình nghiên cứu chúng tôi đề xuất một số ý kiến sau:
+1. 	Cần phổ biến rộng rãi kiến thức về bệnh lý MNKTT trong cộng đồng để phòng ngừa và điều trị sớm.
+2. Có thể áp dụng rộng rãi hơn phương pháp điều trị nhĩ châm kết hợp xoa bóp bấm huyệt trong điều trị bệnh lý MNKTT.
+3. 	Cần mở rộng nghiên cứu trên số lượng bệnh nhân lớn hơn, thời gian nghiên cứu dài hơn để có thể đánh giá một cách hoàn chỉnh về phương pháp điều trị nhĩ châm kết hợp xoa bóp bấm huyệt trong điều trị bệnh lý MNKTT, các yếu tố liên quan cũng như theo dõi các tác dụng không muốn của phương pháp điều trị trên các chỉ số lâm sàng và cận lâm sàng.
+
+
+
+
+
+
+::: {custom-style="CAN GIUA DAM 14 ONE"}
+TÀI LIỆU THAM KHẢO
+:::
