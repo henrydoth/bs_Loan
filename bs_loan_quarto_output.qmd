@@ -559,6 +559,8 @@ Phân tích điểm MMSE theo nhóm đã cung cấp **cái nhìn toàn diện v�
 
 Việc kết hợp MMSE với các chỉ số khác sẽ mang lại **tiếp cận đa chiều**, từ đó tối ưu hóa việc **phân tầng nguy cơ, tiên lượng, và can thiệp sớm** cho người bệnh sa sút trí tuệ trong cộng đồng Việt Nam.
 
+### Bàn luận zb
+
 
 
 ## Tài liệu tham khảo
