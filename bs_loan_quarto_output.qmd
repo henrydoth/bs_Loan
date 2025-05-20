@@ -135,6 +135,10 @@ TP Hồ Chí Minh: `r formatted_datetime`
 
 Dữ liệu 
 
+```{r}
+df <- haven::read_sav("bsloan.sav")
+
+```
 
 
 
