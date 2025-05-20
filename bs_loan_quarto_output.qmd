@@ -127,15 +127,292 @@ formatted_datetime <- glue("{gio}, {thu}, NGÀY {ngay} THÁNG {thang} NĂM {nam}
 ::: {custom-style="CAN GIUA DAM 14 ONE"}
 LỜI NÓI ĐẦU
 :::
-xin cảm ơn TS TRần Công Thắng
+xin cảm ơnset_flextable_defaults TS TRần Công Thắng
 
 TP Hồ Chí Minh: `r formatted_datetime`
 
 # MÃ LỆNH
 
+
+
 Dữ liệu 
+```{r}
+#| label: data
+#| message: false
+#| warning: false
+#| include: false
+#| paged-print: false
+df_raw <- read_sav(here::here("source", "bsloan.sav"), encoding = "latin1")
+
+# Ghi ra CSV nếu chưa tồn tại
+write_csv(df_raw, here::here("source", "bsloan.csv"))
+
+#❤️❤️ biến đổi  dữ liệu ️❤️❤️##
+#######################################
+
+df <-  read_csv(here::here("source", "bsloan.csv"))
+
+```
+
+```{r}
+df <- df %>%
+  mutate(
+    # 🧓 BỆNH NHÂN
+    tuoi_nguoi_benh = as.numeric(Age_patient),
+
+    # 🎂 NHÓM TUỔI BỆNH NHÂN (≤45 và >45)
+    nhom_tuoi_nguoi_benh = case_when(
+      tuoi_nguoi_benh <= 45 ~ "≤45",
+      tuoi_nguoi_benh > 45 ~ ">45",
+      TRUE ~ NA_character_
+    ) %>%
+      factor(levels = c("≤45", ">45")),
+
+    gioi_tinh_nguoi_benh = factor(Gender_Patient, levels = c(1, 2), labels = c("Nam", "Nữ")),
+    mmse = as.numeric(MMSE),
+    fast = as.integer(FAST),
+
+    # 🧠 PHÂN NHÓM MMSE
+    mmse_group = case_when(
+      mmse <= 9 ~ "Sa sút trí tuệ nặng",
+      mmse >= 10 & mmse <= 20 ~ "Sa sút trí tuệ trung bình",
+      mmse >= 21 & mmse <= 24 ~ "Sa sút trí tuệ nhẹ",
+      mmse >= 25 ~ "MCI, SCI, Bình thường",
+      TRUE ~ NA_character_
+    ) %>%
+      factor(levels = c("Sa sút trí tuệ nặng",
+                        "Sa sút trí tuệ trung bình",
+                        "Sa sút trí tuệ nhẹ",
+                        "MCI, SCI, Bình thường")),
+
+    # 🧠 GIAI ĐOẠN FAST
+    fast_stage = case_when(
+      fast == 1 ~ "Bình thường",
+      fast %in% 2:3 ~ "Suy giảm nhận thức nhẹ",
+      fast == 4 ~ "Sa sút trí tuệ nhẹ",
+      fast == 5 ~ "Sa sút trí tuệ trung bình",
+      fast >= 6 ~ "Sa sút trí tuệ nặng",
+      TRUE ~ NA_character_
+    ) %>%
+      factor(levels = c("Bình thường",
+                        "Suy giảm nhận thức nhẹ",
+                        "Sa sút trí tuệ nhẹ",
+                        "Sa sút trí tuệ trung bình",
+                        "Sa sút trí tuệ nặng")),
+
+    # 🧑‍⚕️ NGƯỜI CHĂM SÓC
+    tuoi_nguoi_cham_soc = as.numeric(Age_caregiver),
+
+    # 🎂 NHÓM TUỔI NGƯỜI CHĂM SÓC
+    nhom_tuoi_nguoi_cham_soc = case_when(
+      tuoi_nguoi_cham_soc <= 50 ~ "≤50",
+      tuoi_nguoi_cham_soc >= 51 & tuoi_nguoi_cham_soc <= 64 ~ "51–64",
+      tuoi_nguoi_cham_soc >= 65 ~ "≥65",
+      TRUE ~ NA_character_
+    ) %>%
+      factor(levels = c("≤50", "51–64", "≥65")),
+
+    gioi_tinh_nguoi_cham_soc = factor(Gender, levels = c(1, 2), labels = c("Nam", "Nữ")),
+
+    # 🎓 HỌC VẤN
+    hoc_van = factor(Education,
+                     levels = c(0, 1, 2, 3, 4),
+                     labels = c("Mù chữ", "Tiểu học", "Trung học", "Cao đẳng/Đại học", "Sau đại học")),
+
+    # 💼 NGHỀ NGHIỆP
+    nghe_nghiep = factor(Occupation,
+                         levels = c(1, 2, 3, 4, 5, 6),
+                         labels = c("Nội trợ", "Lao động văn phòng", "Lao động tay chân",
+                                    "Đi học", "Nghỉ hưu", "Khác")),
+
+    # 💍 HÔN NHÂN
+    tinh_trang_hon_nhan = factor(Marriage_status,
+                                 levels = c(1, 2, 3),
+                                 labels = c("Độc thân", "Kết hôn", "Ly dị")),
+
+    # 👪 MỐI QUAN HỆ
+    moi_quan_he_voi_nguoi_benh = factor(Relationship,
+                                        levels = c(1, 2, 3, 4, 5),
+                                        labels = c("Vợ chồng", "Con ruột", "Con dâu/con rể", "Giúp việc", "Khác")),
+
+    # 🕒 SỐ GIỜ CHĂM MỖI NGÀY
+    so_gio_cham_trong_ngay = factor(Time_day,
+                                     levels = c(1, 2, 3),
+                                     labels = c("<8 giờ", "8–12 giờ", ">12 giờ")),
+
+    # ⏳ TỔNG THỜI GIAN CHĂM SÓC
+    tong_thoi_gian_cham_soc_tu_luc_benh = factor(Time_total,
+                                                 levels = c(1, 2, 3),
+                                                 labels = c("0,5 – 1 năm", "1 – 5 năm", ">5 năm")),
+
+    # 📈 GÁNH NẶNG ZBI
+    zbi = as.numeric(ZBI),
+    phan_do_zbi = case_when(
+      zbi <= 20 ~ "Không hoặc rất nhẹ",
+      zbi <= 40 ~ "Nhẹ đến trung bình",
+      zbi <= 60 ~ "Trung bình – nặng",
+      zbi > 60  ~ "Rất nặng",
+      TRUE ~ NA_character_
+    ) %>%
+      factor(levels = c("Không hoặc rất nhẹ", "Nhẹ đến trung bình", "Trung bình – nặng", "Rất nặng")),
+
+    # 💰 THU NHẬP
+    lien_quan_toi_thu_nhap = factor(Money,
+                                    levels = c(1, 2, 3),
+                                    labels = c("<5 triệu", "5–10 triệu", ">10 triệu"))
+  )
 
 
+```
+
+## Đặc điểm nhân khẩu người bệnh 
+```{r tbl_nhan_khau_nguoi_benh, results='asis'}
+
+# 🧠 Lọc dữ liệu người bệnh
+df_nhan_khau_nguoi_benh <- df %>%
+  filter(mmse_group != "MCI, SCI, Bình thường")
+
+# 📊 Thống kê tuổi
+tuoi_tb <- round(mean(df_nhan_khau_nguoi_benh$tuoi_nguoi_benh, na.rm = TRUE), 1)
+tuoi_sd <- round(sd(df_nhan_khau_nguoi_benh$tuoi_nguoi_benh, na.rm = TRUE), 1)
+tuoi_med <- round(median(df_nhan_khau_nguoi_benh$tuoi_nguoi_benh, na.rm = TRUE), 1)
+tuoi_min <- min(df_nhan_khau_nguoi_benh$tuoi_nguoi_benh, na.rm = TRUE)
+tuoi_q1 <- round(quantile(df_nhan_khau_nguoi_benh$tuoi_nguoi_benh, 0.25, na.rm = TRUE), 1)
+tuoi_q3 <- round(quantile(df_nhan_khau_nguoi_benh$tuoi_nguoi_benh, 0.75, na.rm = TRUE), 1)
+tuoi_max <- max(df_nhan_khau_nguoi_benh$tuoi_nguoi_benh, na.rm = TRUE)
+
+# 👤 Giới tính
+gioi_tbl <- df_nhan_khau_nguoi_benh %>%
+  count(gioi_tinh_nguoi_benh) %>%
+  mutate(ti_le = round(n / sum(n) * 100, 1),
+         gia_tri = glue("{n} ({ti_le}%)")) %>%
+  select(gioi_tinh_nguoi_benh, gia_tri)
+
+# 📋 Tạo bảng dữ liệu
+tbl_nhan_khau_nguoi_benh <- tibble::tibble(
+  `Đặc điểm` = c("Tuổi trung bình (SD)", "Tuổi trung vị", "Tứ phân vị (Q1 – Q3)",
+                 "Tuổi nhỏ nhất", "Tuổi cao nhất", "Giới tính", "Giới tính"),
+  `Phân loại` = c(NA, NA, NA, NA, NA, "Nam", "Nữ"),
+  `Giá trị` = c(
+    glue("{tuoi_tb} ± {tuoi_sd}"),
+    glue("{tuoi_med}"),
+    glue("{tuoi_q1} – {tuoi_q3}"),
+    glue("{tuoi_min}"),
+    glue("{tuoi_max}"),
+    gioi_tbl$gia_tri[gioi_tbl$gioi_tinh_nguoi_benh == "Nam"],
+    gioi_tbl$gia_tri[gioi_tbl$gioi_tinh_nguoi_benh == "Nữ"]
+  )
+)
+
+# 📄 Flextable xuất Word
+ft_nhan_khau_nguoi_benh <- flextable(tbl_nhan_khau_nguoi_benh) %>%
+  set_header_labels(
+    `Đặc điểm` = "Đặc điểm",
+    `Phân loại` = "Phân loại",
+    `Giá trị` = "Giá trị"
+  ) %>%
+  autofit() %>%
+  align(align = "center", part = "all") %>%
+  bold(i = 1, part = "header") %>%
+  font(fontname = "Times New Roman", part = "all") %>%
+  fontsize(size = 12, part = "all") %>%
+  set_caption("Bảng đặc điểm nhân khẩu người bệnh") %>%
+  set_table_properties(width = 1, layout = "autofit")
+
+# 🖨️ In bảng
+ft_nhan_khau_nguoi_benh
+
+# 📝 Nhận xét
+nhan_xet_nhan_khau_nguoi_benh <- glue(
+  "**Nhận xét:** Tuổi trung bình là {tuoi_tb} ± {tuoi_sd}, trung vị {tuoi_med}, nhỏ nhất {tuoi_min}, cao nhất {tuoi_max}, ",
+  "tứ phân vị từ {tuoi_q1} – {tuoi_q3}. Giới tính gồm Nam: {gioi_tbl$gia_tri[gioi_tbl$gioi_tinh_nguoi_benh == 'Nam']} và ",
+  "Nữ: {gioi_tbl$gia_tri[gioi_tbl$gioi_tinh_nguoi_benh == 'Nữ']}."
+)
+cat("\n\n", nhan_xet_nhan_khau_nguoi_benh)
+
+# 💬 Bàn luận
+ban_luan_nhan_khau_nguoi_benh <- glue(
+  "**Bàn luận:** Người bệnh trong nghiên cứu có độ tuổi trung bình cao, với độ phân tán rõ giữa nhỏ nhất và cao nhất, ",
+  "phù hợp với đặc trưng nhóm sa sút trí tuệ. Giới tính phân bố rõ ràng giúp hỗ trợ đánh giá yếu tố nguy cơ theo giới."
+)
+cat("\n\n", ban_luan_nhan_khau_nguoi_benh)
+```
+
+## Đặc điểm MMSE
+
+```{r mmse_group_analysis, include=FALSE}
+
+
+# 📦 Dữ liệu phân tích
+df_mmse <- df %>% filter(mmse_group != "MCI, SCI, Bình thường")
+
+# 📊 Bảng pivot MMSE
+tbl_mmse_pivot <- df_mmse %>%
+  group_by(mmse_group) %>%
+  summarise(
+    `Trung bình (SD)` = glue("{round(mean(mmse, na.rm = TRUE),1)} ± {round(sd(mmse, na.rm = TRUE),1)}"),
+    `Trung vị` = round(median(mmse, na.rm = TRUE), 1),
+    `Tứ phân vị (Q1 – Q3)` = glue("{round(quantile(mmse, 0.25, na.rm = TRUE),1)} – {round(quantile(mmse, 0.75, na.rm = TRUE),1)}"),
+    `Nhỏ nhất` = round(min(mmse, na.rm = TRUE), 1),
+    `Lớn nhất` = round(max(mmse, na.rm = TRUE), 1),
+    .groups = "drop"
+  ) %>%
+  mutate(across(-mmse_group, as.character)) %>%
+  pivot_longer(cols = -mmse_group, names_to = "Chỉ số", values_to = "Giá trị") %>%
+  pivot_wider(names_from = mmse_group, values_from = "Giá trị") %>%
+  select(
+    `Chỉ số`,
+    `Sa sút trí tuệ nhẹ`,
+    `Sa sút trí tuệ trung bình`,
+    `Sa sút trí tuệ nặng`
+  )
+
+# 🧾 Flextable bảng MMSE
+ft_mmse <- flextable(tbl_mmse_pivot) %>%
+  autofit() %>%
+  align(align = "center", part = "all") %>%
+  bold(i = 1, part = "header") %>%
+  font(fontname = "Times New Roman", part = "all") %>%
+  fontsize(size = 12, part = "all") %>%
+  set_caption("Bảng mô tả điểm MMSE theo phân nhóm MMSE") %>%
+  set_table_properties(width = 1, layout = "autofit")
+
+# 📈 Biểu đồ boxplot MMSE
+plot_mmse <- ggplot(df_mmse, aes(x = mmse_group, y = mmse, fill = mmse_group)) +
+  geom_boxplot(width = 0.6, show.legend = FALSE) +
+  labs(x = "Nhóm MMSE", y = "Điểm MMSE") +
+  theme_minimal(base_family = "Times New Roman") +
+  theme(axis.text.x = element_text(angle = 15, hjust = 1))
+
+# 📊 Tóm tắt chung
+mmse_tb <- round(mean(df_mmse$mmse, na.rm = TRUE), 1)
+mmse_sd <- round(sd(df_mmse$mmse, na.rm = TRUE), 1)
+mmse_med <- round(median(df_mmse$mmse, na.rm = TRUE), 1)
+mmse_min <- min(df_mmse$mmse, na.rm = TRUE)
+mmse_max <- max(df_mmse$mmse, na.rm = TRUE)
+mmse_q1 <- round(quantile(df_mmse$mmse, 0.25, na.rm = TRUE), 1)
+mmse_q3 <- round(quantile(df_mmse$mmse, 0.75, na.rm = TRUE), 1)
+
+# ✏️ Nhận xét bảng
+nhan_xet_bang_mmse <- glue(
+  "**Nhận xét bảng:** Trong nhóm {tbl_mmse_pivot$`Chỉ số`[1]}, điểm MMSE trung bình cao nhất là ở nhóm 'Sa sút trí tuệ nhẹ' ({tbl_mmse_pivot$`Sa sút trí tuệ nhẹ`[1]}), ",
+  "giảm dần ở nhóm 'trung bình' ({tbl_mmse_pivot$`Sa sút trí tuệ trung bình`[1]}) và thấp nhất ở nhóm 'nặng' ({tbl_mmse_pivot$`Sa sút trí tuệ nặng`[1]}). ",
+  "Tương tự, trung vị và các chỉ số khác cũng phản ánh sự phân tầng rõ rệt giữa các mức độ sa sút trí tuệ."
+)
+
+# ✏️ Nhận xét tổng quát
+nhan_xet_mmse <- glue(
+  "**Nhận xét:** Điểm MMSE trung bình toàn bộ là {mmse_tb} ± {mmse_sd}, trung vị {mmse_med}, nhỏ nhất {mmse_min}, lớn nhất {mmse_max}, ",
+  "tứ phân vị từ {mmse_q1} đến {mmse_q3}. Khi phân nhóm, điểm MMSE giảm dần từ nhẹ đến nặng theo kỳ vọng lâm sàng."
+)
+
+# 💬 Bàn luận
+ban_luan_mmse <- glue(
+  "**Bàn luận:** Việc phân nhóm MMSE giúp đánh giá tiến triển sa sút trí tuệ hiệu quả. ",
+  "Sự khác biệt điểm số giữa các nhóm được phản ánh rõ rệt qua bảng và biểu đồ. ",
+  "Kết quả này hỗ trợ chẩn đoán và theo dõi lâm sàng, đặc biệt khi kết hợp với các công cụ đánh giá nhận thức chuyên sâu hơn."
+)
+```
 
 
 ::: {custom-style="CAN GIUA DAM 14 ONE"}
@@ -184,14 +461,107 @@ Người bệnh sa sút trí tuệ và người chăm sóc người bệnh sa s�
 
 # KẾT QUẢ NGHIÊN CỨU
 
-Có  98 người đượ
+## Đặc điểm nhân khẩu người bệnh 
+```{r}
+#| message: false
+#| warning: false
+#| paged-print: false
+ft_nhan_khau_nguoi_benh
+```
+##### `r nhan_xet_nhan_khau_nguoi_benh `
+
+## Đặc điểm MMSE
+Bảng
+
+```{r}
+#| echo: false
+ft_mmse
+```
+
+
+##### `r nhan_xet_bang_mmse`
+
+Biểu đồ
+
+```{r}
+#| echo: false
+plot_mmse
+```
+
+
+
+##### `r nhan_xet_mmse`
+
+
+
 # BÀN LUẬN
 
+##### `r ban_luan_nhan_khau_nguoi_benh  `
+
+## Bàn luận đặc điểm nhân khẩu học người bệnh
+
+Kết quả nghiên cứu cho thấy độ tuổi trung bình của người bệnh là **69,1 ± 8,3**, trung vị 68 tuổi, nhỏ nhất 57 và cao nhất 89 tuổi. Tỷ lệ **nữ giới chiếm 64,5%**, vượt trội so với nam giới (35,5%). Những kết quả này phản ánh đặc điểm nhân khẩu học điển hình của nhóm bệnh sa sút trí tuệ (SSTT) tại nhiều khu vực trên thế giới.
+
+### 1. Tuổi cao – yếu tố nguy cơ hàng đầu
+
+Tuổi tác là yếu tố nguy cơ quan trọng nhất của SSTT. Theo Báo cáo của Tổ chức Y tế Thế giới, có đến 90% người mắc SSTT thuộc nhóm ≥65 tuổi [@who2021]. Một phân tích tổng hợp toàn cầu cho thấy độ tuổi trung bình của bệnh nhân SSTT dao động từ 65–75 tuổi tuỳ theo khu vực [@nichols2022]. Với kết quả trung bình 69,1 ± 8,3 tuổi, nghiên cứu của chúng tôi phù hợp với các số liệu quốc tế và trong nước.
+
+Độ phân tán rộng (từ 57 đến 89 tuổi) và khoảng tứ phân vị 63,5–73,5 cho thấy cần đẩy mạnh sàng lọc sớm ở nhóm ≥60 tuổi – vốn là nhóm dân số đang tăng nhanh tại Việt Nam [@tongcuc2020].
+
+### 2. Phân bố giới tính – ưu thế của nữ giới
+
+Giới tính đóng vai trò quan trọng trong dịch tễ SSTT. Nhiều nghiên cứu cho thấy nữ giới có nguy cơ mắc bệnh cao hơn do tuổi thọ dài hơn và ảnh hưởng nội tiết [@livingston2020]. Trong nghiên cứu tại Hàn Quốc, nữ giới mắc SSTT nhiều hơn nam với tỉ lệ gấp 1,6 lần [@lee2021].
+
+Tỷ lệ nữ chiếm 64,5% trong nghiên cứu của chúng tôi phù hợp với nghiên cứu tại châu Á [@prince2013] và châu Âu [@ferretti2018]. Một số yếu tố như thiếu hụt estrogen sau mãn kinh, sống đơn thân ở tuổi cao hoặc ít hỗ trợ xã hội làm tăng nguy cơ mắc và phát hiện muộn [@pike1999].
+
+Tại Việt Nam, nghiên cứu tại Bệnh viện Tâm thần TW 1 cũng ghi nhận tỷ lệ nữ cao hơn rõ rệt ở nhóm SSTT mức độ nhẹ và trung bình [@nguyenvt2020].
+
+### 3. Hàm ý lâm sàng và quản lý
+
+Hiểu rõ đặc điểm tuổi và giới tính người bệnh giúp thiết kế chương trình can thiệp phù hợp. Cần ưu tiên sàng lọc SSTT ở nhóm người cao tuổi, đặc biệt là **nữ giới sống một mình**, ở cả cộng đồng và tuyến y tế cơ sở. Cũng nên phát triển các công cụ tầm soát đơn giản, dễ dùng, hỗ trợ phát hiện sớm SSTT ở vùng nông thôn [@pham2021].
+
+Ngoài ra, việc thu thập dữ liệu nhân khẩu học thường quy có ý nghĩa quan trọng trong hoạch định chính sách, đào tạo nhân lực và xây dựng hệ thống quản lý người bệnh SSTT tại Việt Nam.
 
 
-## Đặc điểm mẫu của nghiên cứu
+### Bàn luận mmse
+`r ban_luan_mmse` 
 
-### Đặc điểm theo Tuổi
+## **Bàn luận đặc điểm điểm MMSE** {-}
+
+**MMSE (Mini-Mental State Examination)** là công cụ sàng lọc nhận thức phổ biến nhất hiện nay trong lâm sàng thần kinh và lão khoa. Với thời gian thực hiện ngắn và dễ chuẩn hóa, MMSE cho phép phân loại mức độ suy giảm nhận thức một cách tương đối rõ ràng \[@folstein1975mini].
+
+Trong nghiên cứu này, việc phân loại điểm MMSE theo ba nhóm chính: **sa sút trí tuệ nhẹ (21–24), trung bình (10–20), nặng (≤9)** đã phản ánh mức độ tiến triển bệnh lý trên lâm sàng. **Giá trị trung bình điểm MMSE lần lượt là 21,5 ± 0,9 (nhẹ), 16,8 ± 2,9 (trung bình), và 2,6 ± 4,4 (nặng)**. Điều này phù hợp với đặc điểm phân tầng đã được công bố trong các nghiên cứu quốc tế và trong nước \[@hughes1982new; @rosen1984new].
+
+### **Ý nghĩa mô tả thống kê MMSE theo nhóm**
+
+Không chỉ dừng ở giá trị trung bình, phân tích chi tiết như **trung vị**, **tứ phân vị (Q1–Q3)**, và các giá trị **nhỏ nhất - lớn nhất** càng làm rõ đặc trưng từng nhóm. Ví dụ, **tứ phân vị nhóm nhẹ (21–21,5)** thể hiện sự tập trung điểm cao, trong khi **nhóm trung bình (15–19,2)** và **nhóm nặng (0–4,5)** có khoảng giá trị phân tán rộng hơn.
+
+Sự khác biệt rõ rệt giữa các nhóm xác nhận tính **phân tầng chính xác của MMSE**, điều tưng được khẳng định qua nghiên cứu của Nasreddine et al. và Petersen et al. \[@nasreddine2005montreal; @petersen2004mild].
+
+### **Giá trị chẩn đoán và theo dõi của MMSE**
+
+Một trong những lợi thế lớn của MMSE là khả năng **đánh giá tiến triển bệnh theo thời gian**. Các nghiên cứu dọc đã chứng minh **mỗi 1 điểm giảm trên MMSE** có thể dự báo sự thoái lui chức năng sinh hoạt hàng ngày \[@jack2011hypothetical]. Trong bối cảnh Việt Nam, MMSE vẫn là thước đo phổ biến tại các cơ sở y tế tuyến huyện, và thường được sử dụng như tiêu chí sàng lọc trước khi chuyển lên chuyên khoa thần kinh hoặc tâm thần.
+
+Tuy nhiên, MMSE có **giới hạn nhất định về ảnh hưởng bởi trình độ học vấn**, văn hóa, và khả năng ngôn ngữ. Nhiều tác giả đề xuất cần hiệu chỉnh điểm cắt hoặc kết hợp thêm thang đo khác như **MoCA, CDR, GDS** để tăng độ chính xác \[@winblad2004mild; @reisberg1988global].
+
+### **So sánh với các tài liệu đã công bố**
+
+Phân tích của nghiên cứu này phù hợp với dữ liệu từ nhiều nghiên cứu quốc tế:
+
+* Gauthier et al. báo cáo điểm MMSE trung bình ở bệnh Alzheimer mức nhẹ là khoảng 22, và ở mức trung bình là 16 \[@gauthier2006mild].
+* Trong nghiên cứu Việt Nam gần đây, mức MMSE trung bình ở bệnh nhân sa sút trí tuệ là 15,7 ± 4,6, tương tự nhóm trung bình trong nghiên cứu hiện tại [@nguyen2020lam_sang].
+
+Tuy nhiên, điểm đặc biệt là **nhóm nặng trong nghiên cứu có MMSE cực thấp**, trung bình chỉ 2,6 điểm và nhiều giá trị bằng 0. Điều này có thể phản ánh **tình trạng chẩn đoán trễ** trong cộng đồng, hoặc thiếu cơ hội tiếp cận chăm sóc y tế sớm.
+
+### **Tổng kết và khuyến nghị**
+
+Phân tích điểm MMSE theo nhóm đã cung cấp **cái nhìn toàn diện và phân tầng hợp lý** giữa các mức độ sa sút trí tuệ. Điều này không chỉ hữu ích trong **chẩn đoán**, mà còn giúp định hướng **theo dõi và điều trị**. Tuy nhiên, cần mở rộng phân tích tương quan MMSE với các yếu tố khác như: thời gian chăm sóc, mức độ trầm cảm, gánh nặng người chăm sóc… để hiểu sâu hơn về **tác động toàn diện của suy giảm nhận thức**.
+
+Việc kết hợp MMSE với các chỉ số khác sẽ mang lại **tiếp cận đa chiều**, từ đó tối ưu hóa việc **phân tầng nguy cơ, tiên lượng, và can thiệp sớm** cho người bệnh sa sút trí tuệ trong cộng đồng Việt Nam.
+
+
+
+## Tài liệu tham khảo
 
 
 Kết quả nghiên cứu cho thấy cả hai nhóm can 
