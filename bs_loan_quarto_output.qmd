@@ -133,7 +133,8 @@ TP Hồ Chí Minh: `r formatted_datetime`
 
 # MÃ LỆNH
 
-Dữ liệu 
+Dữ liệu setup
+tải file sav
 
 ```{r}
 df <- haven::read_sav("bsloan.sav")
