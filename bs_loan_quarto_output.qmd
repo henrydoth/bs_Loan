@@ -417,6 +417,8 @@ ban_luan_mmse <- glue(
 )
 ```
 
+### Đặc điểm phân chia FAST
+
 
 ::: {custom-style="CAN GIUA DAM 14 ONE"}
 ĐẶT VẤN ĐỀ
@@ -492,8 +494,9 @@ plot_mmse
 ```
 
 
-
 ##### `r nhan_xet_mmse`
+
+## Đặc điểm FAST
 
 
 
@@ -562,7 +565,9 @@ Phân tích điểm MMSE theo nhóm đã cung cấp **cái nhìn toàn diện v�
 
 Việc kết hợp MMSE với các chỉ số khác sẽ mang lại **tiếp cận đa chiều**, từ đó tối ưu hóa việc **phân tầng nguy cơ, tiên lượng, và can thiệp sớm** cho người bệnh sa sút trí tuệ trong cộng đồng Việt Nam.
 
-### Bàn luận zb
+### Bàn luận fast
+
+
 
 
 
@@ -588,7 +593,7 @@ Từ kết quả của công trình nghiên cứu chúng tôi đề xuất một
 2. Có thể áp dụng rộng rãi hơn phương pháp điều trị nhĩ châm kết hợp xoa bóp bấm huyệt trong điều trị bệnh lý MNKTT.
 3. 	Cần mở rộng nghiên cứu trên số lượng bệnh nhân lớn hơn, thời gian nghiên cứu dài hơn để có thể đánh giá một cách hoàn chỉnh về phương pháp điều trị nhĩ châm kết hợp xoa bóp bấm huyệt trong điều trị bệnh lý MNKTT, các yếu tố liên quan cũng như theo dõi các tác dụng không muốn của phương pháp điều trị trên các chỉ số lâm sàng và cận lâm sàng.
 
-
+###
 
 
 
