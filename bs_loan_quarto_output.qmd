@@ -133,7 +133,8 @@ TP Hồ Chí Minh: `r formatted_datetime`
 
 # MÃ LỆNH
 2105 mac khoa cao cấp làm việc branch liem_feature
--sửa lần 2 tại sao không pull request 
+-sửa lần 2 tại sao không pull request (đã xử lý)
+- own room liem feature 
 
 
 
