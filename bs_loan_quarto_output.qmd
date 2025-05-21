@@ -132,10 +132,8 @@ xin cảm ơnset_flextable_defaults TS TRần Công Thắng
 TP Hồ Chí Minh: `r formatted_datetime`
 
 # MÃ LỆNH
-2105 mac khoa cao cấp làm việc branch liem_feature
--sửa lần 2 tại sao không pull request 
+ trưa 21/5 thursday own room liem_feature test 
 
-10:27 pm test before bed
 
 
 Dữ liệu 
@@ -264,16 +262,7 @@ df <- df %>%
                                     levels = c(1, 2, 3),
                                     labels = c("<5 triệu", "5–10 triệu", ">10 triệu"))
   )
-=======
- 20/5 9:29 kiểm tra github test desktop
-Dữ liệu setup
-tải file sav
->>>>>>> origin/main
 
-```{r}
-df <- haven::read_sav("bsloan.sav")
-
-```
 
 ```
 
@@ -449,9 +438,6 @@ trở ngại trong việc chăm sóc và theo dõi người bệnh. Có rất nh
 2. Phân tích kinh nghiệm chăm sóc người bệnh sa sút trí tuệ tại nhà ở Việt Nam.
 
 # TỔNG QUANG TÀI LIỆU
-Test thử
-
-
 
 Thuật ngữ sa sút trí tuệ “dementia” bắt nguồn từ một từ Latin là “demens” nghĩa là mất trí nhớ, và đã được sử dụng từ thế kỷ thứ 13 và xuất hiện trong cộng đồng y khoa vào thế kỷ thứ 18 trong quyển sách “Từ điển y học (Physical Dictionary)” của Blancard vào năm 17267.
 Thế kỷ thứ 19, thuật ngữ sa sút trí tuệ được đưa ra trước giới y khoa bởi nhà tâm thần học nổi tiếng Philippe Pinel (1745 – 1826) vào năm 1806. Trước khi Philippe Pinel thực hiện cải cách nhân đạo, những người mắc chứng suy giảm trí nhớ đều bị giam cầm và sống trong điều kiện khắc nghiệt. Ông đã thành công trong việc thành lập các nhà thương điên thay cho nhà tù và kiên quyết ủng hộ những tiếp cận khoa học trong lĩnh vực sa sút trí tuệ tại Pháp và trên toàn thế giới7.
