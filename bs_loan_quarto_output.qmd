@@ -127,16 +127,20 @@ formatted_datetime <- glue("{gio}, {thu}, NGÀY {ngay} THÁNG {thang} NĂM {nam}
 ::: {custom-style="CAN GIUA DAM 14 ONE"}
 LỜI NÓI ĐẦU
 :::
-xin cảm ơnset_flextable_defaults TS TRần Công Thắng
+
+"Tôi xin trân trọng cảm ơn ..."
+
+
 
 TP Hồ Chí Minh: `r formatted_datetime`
 
-# MÃ LỆNH
- trưa 21/5 thursday own room liem_feature test 
 
 
+::: {custom-style="CAN GIUA DAM 14 ONE"}
+MÃ LỆNH
+:::
 
-Dữ liệu 
+
 ```{r}
 #| label: data
 #| message: false
@@ -158,111 +162,110 @@ df <-  read_csv(here::here("source", "bsloan.csv"))
 ```{r}
 df <- df %>%
   mutate(
-    # 🧓 BỆNH NHÂN
+    # 🧓 Tuổi bệnh nhân
     tuoi_nguoi_benh = as.numeric(Age_patient),
 
-    # 🎂 NHÓM TUỔI BỆNH NHÂN (≤45 và >45)
+    # 🎂 Nhóm tuổi bệnh nhân
     nhom_tuoi_nguoi_benh = case_when(
       tuoi_nguoi_benh <= 45 ~ "≤45",
-      tuoi_nguoi_benh > 45 ~ ">45",
+      tuoi_nguoi_benh > 45  ~ ">45",
       TRUE ~ NA_character_
-    ) %>%
-      factor(levels = c("≤45", ">45")),
+    ) %>% factor(levels = c("≤45", ">45")),
 
+    # ⚧️ Giới tính bệnh nhân
     gioi_tinh_nguoi_benh = factor(Gender_Patient, levels = c(1, 2), labels = c("Nam", "Nữ")),
+
+    # 🧠 MMSE & phân nhóm
     mmse = as.numeric(MMSE),
-    fast = as.integer(FAST),
-
-    # 🧠 PHÂN NHÓM MMSE
     mmse_group = case_when(
-      mmse <= 9 ~ "Sa sút trí tuệ nặng",
-      mmse >= 10 & mmse <= 20 ~ "Sa sút trí tuệ trung bình",
-      mmse >= 21 & mmse <= 24 ~ "Sa sút trí tuệ nhẹ",
-      mmse >= 25 ~ "MCI, SCI, Bình thường",
-      TRUE ~ NA_character_
-    ) %>%
-      factor(levels = c("Sa sút trí tuệ nặng",
-                        "Sa sút trí tuệ trung bình",
-                        "Sa sút trí tuệ nhẹ",
-                        "MCI, SCI, Bình thường")),
+      mmse <= 9                  ~ "Sa sút trí tuệ nặng",
+      mmse >= 10 & mmse <= 20    ~ "Sa sút trí tuệ trung bình",
+      mmse >= 21 & mmse <= 24    ~ "Sa sút trí tuệ nhẹ",
+      mmse >= 25                 ~ "MCI, SCI, Bình thường",
+      TRUE                       ~ NA_character_
+    ) %>% factor(levels = c(
+      "Sa sút trí tuệ nặng",
+      "Sa sút trí tuệ trung bình",
+      "Sa sút trí tuệ nhẹ",
+      "MCI, SCI, Bình thường"
+    )),
 
-    # 🧠 GIAI ĐOẠN FAST
-    fast_stage = case_when(
-      fast == 1 ~ "Bình thường",
-      fast %in% 2:3 ~ "Suy giảm nhận thức nhẹ",
-      fast == 4 ~ "Sa sút trí tuệ nhẹ",
-      fast == 5 ~ "Sa sút trí tuệ trung bình",
-      fast >= 6 ~ "Sa sút trí tuệ nặng",
-      TRUE ~ NA_character_
-    ) %>%
-      factor(levels = c("Bình thường",
-                        "Suy giảm nhận thức nhẹ",
-                        "Sa sút trí tuệ nhẹ",
-                        "Sa sút trí tuệ trung bình",
-                        "Sa sút trí tuệ nặng")),
+    # 🔢 Trích số giai đoạn từ FAST (6a → 6, 7d → 7)
+    fast_so = as.numeric(str_extract(FAST, "^[0-9]")),
 
-    # 🧑‍⚕️ NGƯỜI CHĂM SÓC
+    # 🧠  Phân nhóm FAST rút gọn theo giai đoạn 1–7 đề tài bs Hoa
+    fast_group = case_when(
+      fast_so %in% 1:2 ~ "Bình thường",    # 🟢
+      fast_so == 3     ~ "Sớm",            # 🟡
+      fast_so == 4     ~ "Nhẹ",            # 🟠
+      fast_so == 5     ~ "Trung bình",     # 🔴
+      fast_so == 6     ~ "Nặng",           # ⚫
+      fast_so == 7     ~ "Rất nặng",       # ⚫⚫
+      TRUE             ~ NA_character_
+    ) %>% factor(levels = c("Bình thường", "Sớm", "Nhẹ", "Trung bình", "Nặng", "Rất nặng")),
+
+    # 🧑‍⚕️ Tuổi người chăm sóc
     tuoi_nguoi_cham_soc = as.numeric(Age_caregiver),
 
-    # 🎂 NHÓM TUỔI NGƯỜI CHĂM SÓC
+    # 🎂 Nhóm tuổi người chăm sóc
     nhom_tuoi_nguoi_cham_soc = case_when(
       tuoi_nguoi_cham_soc <= 50 ~ "≤50",
-      tuoi_nguoi_cham_soc >= 51 & tuoi_nguoi_cham_soc <= 64 ~ "51–64",
+      tuoi_nguoi_cham_soc <= 64 ~ "51–64",
       tuoi_nguoi_cham_soc >= 65 ~ "≥65",
       TRUE ~ NA_character_
-    ) %>%
-      factor(levels = c("≤50", "51–64", "≥65")),
+    ) %>% factor(levels = c("≤50", "51–64", "≥65")),
 
+    # ⚧️ Giới tính người chăm sóc
     gioi_tinh_nguoi_cham_soc = factor(Gender, levels = c(1, 2), labels = c("Nam", "Nữ")),
 
-    # 🎓 HỌC VẤN
+    # 🎓 Học vấn
     hoc_van = factor(Education,
                      levels = c(0, 1, 2, 3, 4),
                      labels = c("Mù chữ", "Tiểu học", "Trung học", "Cao đẳng/Đại học", "Sau đại học")),
 
-    # 💼 NGHỀ NGHIỆP
+    # 💼 Nghề nghiệp
     nghe_nghiep = factor(Occupation,
                          levels = c(1, 2, 3, 4, 5, 6),
                          labels = c("Nội trợ", "Lao động văn phòng", "Lao động tay chân",
                                     "Đi học", "Nghỉ hưu", "Khác")),
 
-    # 💍 HÔN NHÂN
+    # 💍 Hôn nhân
     tinh_trang_hon_nhan = factor(Marriage_status,
                                  levels = c(1, 2, 3),
                                  labels = c("Độc thân", "Kết hôn", "Ly dị")),
 
-    # 👪 MỐI QUAN HỆ
+    # 👪 Mối quan hệ với người bệnh
     moi_quan_he_voi_nguoi_benh = factor(Relationship,
                                         levels = c(1, 2, 3, 4, 5),
                                         labels = c("Vợ chồng", "Con ruột", "Con dâu/con rể", "Giúp việc", "Khác")),
 
-    # 🕒 SỐ GIỜ CHĂM MỖI NGÀY
+    # 🕒 Số giờ chăm mỗi ngày
     so_gio_cham_trong_ngay = factor(Time_day,
                                      levels = c(1, 2, 3),
                                      labels = c("<8 giờ", "8–12 giờ", ">12 giờ")),
 
-    # ⏳ TỔNG THỜI GIAN CHĂM SÓC
+    # ⏳ Tổng thời gian chăm sóc
     tong_thoi_gian_cham_soc_tu_luc_benh = factor(Time_total,
                                                  levels = c(1, 2, 3),
                                                  labels = c("0,5 – 1 năm", "1 – 5 năm", ">5 năm")),
 
-    # 📈 GÁNH NẶNG ZBI
+    # 📈 Gánh nặng chăm sóc ZBI
     zbi = as.numeric(ZBI),
     phan_do_zbi = case_when(
-      zbi <= 20 ~ "Không hoặc rất nhẹ",
-      zbi <= 40 ~ "Nhẹ đến trung bình",
-      zbi <= 60 ~ "Trung bình – nặng",
-      zbi > 60  ~ "Rất nặng",
+      zbi <= 20 ~ "Không hoặc rất nhẹ",      # 🙂
+      zbi <= 40 ~ "Nhẹ đến trung bình",      # 😐
+      zbi <= 60 ~ "Trung bình – nặng",       # 😟
+      zbi > 60  ~ "Rất nặng",                # 😫
       TRUE ~ NA_character_
-    ) %>%
-      factor(levels = c("Không hoặc rất nhẹ", "Nhẹ đến trung bình", "Trung bình – nặng", "Rất nặng")),
+    ) %>% factor(levels = c(
+      "Không hoặc rất nhẹ", "Nhẹ đến trung bình", "Trung bình – nặng", "Rất nặng"
+    )),
 
-    # 💰 THU NHẬP
+    # 💰 Thu nhập người chăm sóc
     lien_quan_toi_thu_nhap = factor(Money,
                                     levels = c(1, 2, 3),
                                     labels = c("<5 triệu", "5–10 triệu", ">10 triệu"))
   )
-
 
 ```
 
@@ -333,7 +336,7 @@ cat("\n\n", nhan_xet_nhan_khau_nguoi_benh)
 
 # 💬 Bàn luận
 ban_luan_nhan_khau_nguoi_benh <- glue(
-  "**Bàn luận:** Người bệnh trong nghiên cứu có độ tuổi trung bình cao, với độ phân tán rõ giữa nhỏ nhất và cao nhất, ",
+  "Người bệnh trong nghiên cứu có độ tuổi trung bình cao, với độ phân tán rõ giữa nhỏ nhất và cao nhất, ",
   "phù hợp với đặc trưng nhóm sa sút trí tuệ. Giới tính phân bố rõ ràng giúp hỗ trợ đánh giá yếu tố nguy cơ theo giới."
 )
 cat("\n\n", ban_luan_nhan_khau_nguoi_benh)
@@ -409,11 +412,70 @@ nhan_xet_mmse <- glue(
 
 # 💬 Bàn luận
 ban_luan_mmse <- glue(
-  "**Bàn luận:** Việc phân nhóm MMSE giúp đánh giá tiến triển sa sút trí tuệ hiệu quả. ",
+  "**Việc phân nhóm MMSE giúp đánh giá tiến triển sa sút trí tuệ hiệu quả. ",
   "Sự khác biệt điểm số giữa các nhóm được phản ánh rõ rệt qua bảng và biểu đồ. ",
   "Kết quả này hỗ trợ chẩn đoán và theo dõi lâm sàng, đặc biệt khi kết hợp với các công cụ đánh giá nhận thức chuyên sâu hơn."
 )
 ```
+
+## Phân độ Fast
+
+```{r}
+# 📊 Tính số lượng và tỷ lệ từ dữ liệu df có biến fast_group
+bang_fast <- df %>%
+  filter(!is.na(fast_group)) %>%
+  count(fast_group) %>%
+  mutate(
+    `Tỷ lệ (%)` = round(n / sum(n) * 100, 1),
+    fast_group = factor(fast_group, levels = c("Bình thường", "Sớm", "Nhẹ", "Trung bình", "Nặng", "Rất nặng"))
+  ) %>%
+  rename(`Phân loại FAST` = fast_group,
+         `Số lượng` = n)
+
+# 📋 Tạo flextable
+ft_bang_fast <- flextable(bang_fast) %>%
+  set_caption("Bảng phân bố bệnh nhân theo phân loại FAST") %>%
+  font(fontname = "Times New Roman", part = "all") %>%
+  fontsize(size = 12, part = "all") %>%
+  align(align = "center", part = "all") %>%
+  autofit() %>%
+  set_table_properties(width = 1, layout = "autofit")
+
+# 📈 Biểu đồ ggplot2 không có chữ 'người'
+bieu_do_fast <- ggplot(bang_fast, aes(x = `Phân loại FAST`, y = `Tỷ lệ (%)`, fill = `Phân loại FAST`)) +
+  geom_col(width = 0.6, show.legend = FALSE) +
+  geom_text(aes(label = paste0(`Số lượng`, " (", `Tỷ lệ (%)`, "%)")), vjust = -0.5, size = 4) +
+  labs(x = "Phân loại FAST", y = "Tỷ lệ (%)") +
+  ylim(0, 30) +
+  theme_minimal(base_family = "Times New Roman") +
+  theme(axis.text.x = element_text(angle = 15, hjust = 1))
+
+# ✍️ Nhận xét bảng
+nhan_xet_fast_bang <- glue::glue(
+  "**Nhận xét bảng:** Nhóm phổ biến nhất là '{bang_fast$`Phân loại FAST`[which.max(bang_fast$`Số lượng`)]}' với ",
+  "{max(bang_fast$`Số lượng`)} người (",
+  "{bang_fast$`Tỷ lệ (%)`[which.max(bang_fast$`Số lượng`)]}%). ",
+  "Nhóm thấp nhất là '{bang_fast$`Phân loại FAST`[which.min(bang_fast$`Số lượng`)]}' với ",
+  "{min(bang_fast$`Số lượng`)} người."
+)
+
+# ✍️ Nhận xét biểu đồ
+nhan_xet_fast_bieu_do <- glue::glue(
+  "Biểu đồ phản ánh rõ sự phân tầng theo mức độ sa sút trí tuệ, ",
+  "trong đó các nhóm 'Nhẹ' và 'Trung bình' chiếm tỷ lệ cao nhất."
+)
+
+# 🧠 Bàn luận
+ban_luan_fast <- glue::glue(
+  " Thang FAST là công cụ đánh giá chức năng theo giai đoạn bệnh lý sa sút trí tuệ. ",
+  "Phân bố trong nghiên cứu cho thấy sự tập trung cao ở các giai đoạn giữa, cho thấy người bệnh thường được phát hiện ",
+  "và chẩn đoán ở giai đoạn đã có ảnh hưởng rõ đến chức năng sống hàng ngày."
+)
+
+
+```
+
+
 
 
 ::: {custom-style="CAN GIUA DAM 14 ONE"}
@@ -476,6 +538,9 @@ Bảng
 
 ```{r}
 #| echo: false
+#| message: false
+#| warning: false
+#| paged-print: false
 ft_mmse
 ```
 
@@ -486,30 +551,52 @@ Biểu đồ
 
 ```{r}
 #| echo: false
+#| message: false
+#| warning: false
+#| paged-print: false
 plot_mmse
 ```
 
-
-
 ##### `r nhan_xet_mmse`
+
+
+## Đặc điểm fast
+Bảng
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| paged-print: false
+ft_bang_fast
+```
+
+##### `r nhan_xet_fast_bang` 
+
+Biểu đồ
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| paged-print: false
+bieu_do_fast 
+```
+
+##### `r nhan_xet_fast_bieu_do` 
 
 
 
 # BÀN LUẬN
 
-##### `r ban_luan_nhan_khau_nguoi_benh  `
-
 ## Bàn luận đặc điểm nhân khẩu học người bệnh
+`r ban_luan_nhan_khau_nguoi_benh  `
+
 
 Kết quả nghiên cứu cho thấy độ tuổi trung bình của người bệnh là **69,1 ± 8,3**, trung vị 68 tuổi, nhỏ nhất 57 và cao nhất 89 tuổi. Tỷ lệ **nữ giới chiếm 64,5%**, vượt trội so với nam giới (35,5%). Những kết quả này phản ánh đặc điểm nhân khẩu học điển hình của nhóm bệnh sa sút trí tuệ (SSTT) tại nhiều khu vực trên thế giới.
-
-### 1. Tuổi cao – yếu tố nguy cơ hàng đầu
 
 Tuổi tác là yếu tố nguy cơ quan trọng nhất của SSTT. Theo Báo cáo của Tổ chức Y tế Thế giới, có đến 90% người mắc SSTT thuộc nhóm ≥65 tuổi [@who2021]. Một phân tích tổng hợp toàn cầu cho thấy độ tuổi trung bình của bệnh nhân SSTT dao động từ 65–75 tuổi tuỳ theo khu vực [@nichols2022]. Với kết quả trung bình 69,1 ± 8,3 tuổi, nghiên cứu của chúng tôi phù hợp với các số liệu quốc tế và trong nước.
 
 Độ phân tán rộng (từ 57 đến 89 tuổi) và khoảng tứ phân vị 63,5–73,5 cho thấy cần đẩy mạnh sàng lọc sớm ở nhóm ≥60 tuổi – vốn là nhóm dân số đang tăng nhanh tại Việt Nam [@tongcuc2020].
-
-### 2. Phân bố giới tính – ưu thế của nữ giới
 
 Giới tính đóng vai trò quan trọng trong dịch tễ SSTT. Nhiều nghiên cứu cho thấy nữ giới có nguy cơ mắc bệnh cao hơn do tuổi thọ dài hơn và ảnh hưởng nội tiết [@livingston2020]. Trong nghiên cứu tại Hàn Quốc, nữ giới mắc SSTT nhiều hơn nam với tỉ lệ gấp 1,6 lần [@lee2021].
 
@@ -517,7 +604,6 @@ Tỷ lệ nữ chiếm 64,5% trong nghiên cứu của chúng tôi phù hợp v�
 
 Tại Việt Nam, nghiên cứu tại Bệnh viện Tâm thần TW 1 cũng ghi nhận tỷ lệ nữ cao hơn rõ rệt ở nhóm SSTT mức độ nhẹ và trung bình [@nguyenvt2020].
 
-### 3. Hàm ý lâm sàng và quản lý
 
 Hiểu rõ đặc điểm tuổi và giới tính người bệnh giúp thiết kế chương trình can thiệp phù hợp. Cần ưu tiên sàng lọc SSTT ở nhóm người cao tuổi, đặc biệt là **nữ giới sống một mình**, ở cả cộng đồng và tuyến y tế cơ sở. Cũng nên phát triển các công cụ tầm soát đơn giản, dễ dùng, hỗ trợ phát hiện sớm SSTT ở vùng nông thôn [@pham2021].
 
@@ -527,42 +613,47 @@ Ngoài ra, việc thu thập dữ liệu nhân khẩu học thường quy có ý
 ### Bàn luận mmse
 `r ban_luan_mmse` 
 
-## **Bàn luận đặc điểm điểm MMSE** {-}
 
-**MMSE (Mini-Mental State Examination)** là công cụ sàng lọc nhận thức phổ biến nhất hiện nay trong lâm sàng thần kinh và lão khoa. Với thời gian thực hiện ngắn và dễ chuẩn hóa, MMSE cho phép phân loại mức độ suy giảm nhận thức một cách tương đối rõ ràng \[@folstein1975mini].
+**MMSE (Mini-Mental State Examination)** là công cụ sàng lọc nhận thức phổ biến nhất hiện nay trong lâm sàng thần kinh và lão khoa. Với thời gian thực hiện ngắn và dễ chuẩn hóa, MMSE cho phép phân loại mức độ suy giảm nhận thức một cách tương đối rõ ràng [@folstein1975mini].
 
-Trong nghiên cứu này, việc phân loại điểm MMSE theo ba nhóm chính: **sa sút trí tuệ nhẹ (21–24), trung bình (10–20), nặng (≤9)** đã phản ánh mức độ tiến triển bệnh lý trên lâm sàng. **Giá trị trung bình điểm MMSE lần lượt là 21,5 ± 0,9 (nhẹ), 16,8 ± 2,9 (trung bình), và 2,6 ± 4,4 (nặng)**. Điều này phù hợp với đặc điểm phân tầng đã được công bố trong các nghiên cứu quốc tế và trong nước \[@hughes1982new; @rosen1984new].
-
-### **Ý nghĩa mô tả thống kê MMSE theo nhóm**
+Trong nghiên cứu này, việc phân loại điểm MMSE theo ba nhóm chính: **sa sút trí tuệ nhẹ (21–24), trung bình (10–20), nặng (≤9)** đã phản ánh mức độ tiến triển bệnh lý trên lâm sàng. **Giá trị trung bình điểm MMSE lần lượt là 21,5 ± 0,9 (nhẹ), 16,8 ± 2,9 (trung bình), và 2,6 ± 4,4 (nặng)**. Điều này phù hợp với đặc điểm phân tầng đã được công bố trong các nghiên cứu quốc tế và trong nước [@hughes1982new; @rosen1984new].
 
 Không chỉ dừng ở giá trị trung bình, phân tích chi tiết như **trung vị**, **tứ phân vị (Q1–Q3)**, và các giá trị **nhỏ nhất - lớn nhất** càng làm rõ đặc trưng từng nhóm. Ví dụ, **tứ phân vị nhóm nhẹ (21–21,5)** thể hiện sự tập trung điểm cao, trong khi **nhóm trung bình (15–19,2)** và **nhóm nặng (0–4,5)** có khoảng giá trị phân tán rộng hơn.
 
-Sự khác biệt rõ rệt giữa các nhóm xác nhận tính **phân tầng chính xác của MMSE**, điều tưng được khẳng định qua nghiên cứu của Nasreddine et al. và Petersen et al. \[@nasreddine2005montreal; @petersen2004mild].
+Sự khác biệt rõ rệt giữa các nhóm xác nhận tính **phân tầng chính xác của MMSE**, điều tưng được khẳng định qua nghiên cứu của Nasreddine et al. và Petersen et al. [@nasreddine2005montreal; @petersen2004mild].
 
-### **Giá trị chẩn đoán và theo dõi của MMSE**
+Một trong những lợi thế lớn của MMSE là khả năng **đánh giá tiến triển bệnh theo thời gian**. Các nghiên cứu dọc đã chứng minh **mỗi 1 điểm giảm trên MMSE** có thể dự báo sự thoái lui chức năng sinh hoạt hàng ngày [@jack2011hypothetical]. Trong bối cảnh Việt Nam, MMSE vẫn là thước đo phổ biến tại các cơ sở y tế tuyến huyện, và thường được sử dụng như tiêu chí sàng lọc trước khi chuyển lên chuyên khoa thần kinh hoặc tâm thần.
 
-Một trong những lợi thế lớn của MMSE là khả năng **đánh giá tiến triển bệnh theo thời gian**. Các nghiên cứu dọc đã chứng minh **mỗi 1 điểm giảm trên MMSE** có thể dự báo sự thoái lui chức năng sinh hoạt hàng ngày \[@jack2011hypothetical]. Trong bối cảnh Việt Nam, MMSE vẫn là thước đo phổ biến tại các cơ sở y tế tuyến huyện, và thường được sử dụng như tiêu chí sàng lọc trước khi chuyển lên chuyên khoa thần kinh hoặc tâm thần.
-
-Tuy nhiên, MMSE có **giới hạn nhất định về ảnh hưởng bởi trình độ học vấn**, văn hóa, và khả năng ngôn ngữ. Nhiều tác giả đề xuất cần hiệu chỉnh điểm cắt hoặc kết hợp thêm thang đo khác như **MoCA, CDR, GDS** để tăng độ chính xác \[@winblad2004mild; @reisberg1988global].
-
-### **So sánh với các tài liệu đã công bố**
+Tuy nhiên, MMSE có **giới hạn nhất định về ảnh hưởng bởi trình độ học vấn**, văn hóa, và khả năng ngôn ngữ. Nhiều tác giả đề xuất cần hiệu chỉnh điểm cắt hoặc kết hợp thêm thang đo khác như **MoCA, CDR, GDS** để tăng độ chính xác [@winblad2004mild; @reisberg1988global].
 
 Phân tích của nghiên cứu này phù hợp với dữ liệu từ nhiều nghiên cứu quốc tế:
 
-* Gauthier et al. báo cáo điểm MMSE trung bình ở bệnh Alzheimer mức nhẹ là khoảng 22, và ở mức trung bình là 16 \[@gauthier2006mild].
+* Gauthier et al. báo cáo điểm MMSE trung bình ở bệnh Alzheimer mức nhẹ là khoảng 22, và ở mức trung bình là 16 [@gauthier2006mild].
 * Trong nghiên cứu Việt Nam gần đây, mức MMSE trung bình ở bệnh nhân sa sút trí tuệ là 15,7 ± 4,6, tương tự nhóm trung bình trong nghiên cứu hiện tại [@nguyen2020lam_sang].
 
 Tuy nhiên, điểm đặc biệt là **nhóm nặng trong nghiên cứu có MMSE cực thấp**, trung bình chỉ 2,6 điểm và nhiều giá trị bằng 0. Điều này có thể phản ánh **tình trạng chẩn đoán trễ** trong cộng đồng, hoặc thiếu cơ hội tiếp cận chăm sóc y tế sớm.
-
-### **Tổng kết và khuyến nghị**
 
 Phân tích điểm MMSE theo nhóm đã cung cấp **cái nhìn toàn diện và phân tầng hợp lý** giữa các mức độ sa sút trí tuệ. Điều này không chỉ hữu ích trong **chẩn đoán**, mà còn giúp định hướng **theo dõi và điều trị**. Tuy nhiên, cần mở rộng phân tích tương quan MMSE với các yếu tố khác như: thời gian chăm sóc, mức độ trầm cảm, gánh nặng người chăm sóc… để hiểu sâu hơn về **tác động toàn diện của suy giảm nhận thức**.
 
 Việc kết hợp MMSE với các chỉ số khác sẽ mang lại **tiếp cận đa chiều**, từ đó tối ưu hóa việc **phân tầng nguy cơ, tiên lượng, và can thiệp sớm** cho người bệnh sa sút trí tuệ trong cộng đồng Việt Nam.
 
-### Bàn luận zb
+### Bàn luận fast
+ 
+`r ban_luan_fast` 
 
+Thang FAST (Functional Assessment Staging Test) là công cụ phân loại mức độ sa sút trí tuệ dựa trên suy giảm chức năng sinh hoạt hằng ngày, được ứng dụng rộng rãi trong đánh giá lâm sàng, đặc biệt đối với bệnh Alzheimer [@reisberg1988]. Mỗi mức độ từ 1 đến 7 phản ánh tiến trình suy giảm – từ người bình thường (giai đoạn 1) đến mất hoàn toàn chức năng vận động, ngôn ngữ và phụ thuộc hoàn toàn (giai đoạn 7).
 
+Trong nghiên cứu này, được thực hiện tại Đơn vị Trí nhớ và Sa sút trí tuệ – Bệnh viện 30-4, phân bố bệnh nhân theo FAST cho thấy nhóm “Nhẹ” chiếm tỷ lệ cao nhất (27,3%), tiếp theo là “Bình thường” (21,2%), trong khi các nhóm “Nặng” và “Rất nặng” đều chiếm 15,2%. Điều này phản ánh một thực trạng quan trọng: nhiều người bệnh được chẩn đoán khi chức năng còn chưa suy giảm rõ hoặc mới ở giai đoạn khởi phát. Đây là dấu hiệu tích cực vì cho thấy sự cải thiện trong phát hiện sớm, giúp gia tăng cơ hội can thiệp [@galvin2007].
+
+Mặc dù nhóm “Bình thường” vẫn hiện diện, điều đó không loại trừ khả năng người bệnh đang ở giai đoạn Suy giảm nhận thức chủ quan (SCI) hoặc MCI – chưa ảnh hưởng rõ rệt đến chức năng sống [@gaugler2022]. FAST trong trường hợp này giúp phát hiện sớm sự suy giảm chức năng đang âm thầm tiến triển, ngay cả khi điểm MMSE vẫn còn cao.
+
+Tuy nhiên, tỷ lệ người bệnh ở nhóm “Rất nặng” vẫn còn đáng kể (15,2%). Điều này phản ánh một phần thực trạng phát hiện bệnh muộn trong cộng đồng, khi người bệnh chỉ được đưa đến cơ sở y tế sau khi đã mất khả năng tự chăm sóc [@who2023]. Tại Việt Nam, nơi hệ thống chăm sóc dài hạn và hỗ trợ người chăm sóc còn hạn chế, điều này trở thành một gánh nặng lớn về nhân lực và tài chính cho gia đình [@pham2022]. Theo Wimo và cộng sự, chi phí chăm sóc tăng gấp đôi đến ba lần ở nhóm FAST giai đoạn ≥6 [@wimo2018].
+
+Một điểm đáng chú ý là tỷ lệ nhóm “Trung bình” (9,1%) thấp hơn so với kỳ vọng. Điều này có thể liên quan đến thời gian lưu lại ngắn trong giai đoạn này – nhiều bệnh nhân tiến triển nhanh từ “Nhẹ” sang “Nặng” trong vòng 12–24 tháng. Kết quả phù hợp với báo cáo của Reisberg, cho rằng giai đoạn FAST 5 thường không ổn định và mang tính chuyển tiếp nhanh [@reisberg1988].
+
+Việc sử dụng FAST song song với MMSE và thang ZBI trong nghiên cứu cho phép đánh giá đa chiều cả chức năng và nhận thức, từ đó hỗ trợ bác sĩ xây dựng kế hoạch chăm sóc cá thể hóa. Đặc biệt, nhóm “Nhẹ” và “Trung bình” là những đối tượng lý tưởng cho các chương trình phục hồi chức năng nhận thức, trị liệu nhóm và can thiệp không dùng thuốc [@olazar2021].
+
+Tổng thể, phân loại người bệnh theo FAST tại Đơn vị Trí nhớ và Sa sút trí tuệ – Bệnh viện 30-4 cho thấy sự phân bố trải rộng trên toàn bộ phổ bệnh, đồng thời phản ánh thực trạng phát hiện, chẩn đoán và điều trị người bệnh sa sút trí tuệ tại Việt Nam hiện nay. Những kết quả này không chỉ có ý nghĩa thống kê mà còn cung cấp căn cứ lâm sàng quan trọng cho việc thiết kế các mô hình chăm sóc hiệu quả, tập trung vào can thiệp sớm, hỗ trợ chức năng và đào tạo người chăm sóc.
 
 ## Tài liệu tham khảo
 
