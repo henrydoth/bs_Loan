@@ -866,6 +866,9 @@ Tóm lại, **kết quả điểm số và phân nhóm NPI-Q tại Bệnh viện
 
 
 
+## Tài liệu tham khảo
+
+
 
 
 
@@ -881,7 +884,7 @@ KHUYẾN NGHỊ
 
 
 Từ kết quả của công trình nghiên cứu chúng tôi đề xuất một số ý kiến sau:
-1. 	Cần học thêm maxqda 22
+
 2. Có thể áp dụng 
 3. 	Cần mở rộng nghiên cứu .
 
