@@ -136,10 +136,9 @@ TP Hồ Chí Minh: `r formatted_datetime`
 
 
 
-::: {custom-style="CAN GIUA DAM 14 ONE"}
-MÃ LỆNH
-:::
 
+# MÃ LỆNH
+## Đọc dữ liệu  
 
 ```{r}
 #| label: data
@@ -193,7 +192,7 @@ df <- df %>%
     # 🔢 Trích số giai đoạn từ FAST (6a → 6, 7d → 7)
     fast_so = as.numeric(str_extract(FAST, "^[0-9]")),
 
-    # 🧠  Phân nhóm FAST rút gọn theo giai đoạn 1–7 đề tài bs Hoa
+    # 🧠 Phân nhóm FAST theo đề tài Bs Hoa
     fast_group = case_when(
       fast_so %in% 1:2 ~ "Bình thường",    # 🟢
       fast_so == 3     ~ "Sớm",            # 🟡
@@ -264,7 +263,23 @@ df <- df %>%
     # 💰 Thu nhập người chăm sóc
     lien_quan_toi_thu_nhap = factor(Money,
                                     levels = c(1, 2, 3),
-                                    labels = c("<5 triệu", "5–10 triệu", ">10 triệu"))
+                                    labels = c("<5 triệu", "5–10 triệu", ">10 triệu")),
+
+    # 🧠 Tổng điểm NPI-Q severity
+    npiq_severity_total = rowSums(select(., 
+      NPI_Hoang_Tuong, NPI_Ao_giac, NPI_kich_dong, NPI_tram_cam, NPI_lo_au,
+      NPI_hung_cam, NPI_thu_rut, NPI_mat_uc, NPI_kichthich, NPI_RLVD,
+      NPI_hanhvi, NPI_taste
+    ), na.rm = TRUE),
+
+    # 📊 Phân nhóm độ nặng NPI-Q (gợi ý nghiên cứu)
+    npiq_severity_group = case_when(
+      npiq_severity_total <= 3  ~ "Không hoặc rất nhẹ",  # 😊
+      npiq_severity_total <= 8  ~ "Nhẹ",                  # 🙂 
+      npiq_severity_total <= 15 ~ "Trung bình",           # 😐 
+      npiq_severity_total >= 16 ~ "Nặng",                 # 😣 
+      TRUE ~ NA_character_
+    ) %>% factor(levels = c("Không hoặc rất nhẹ", "Nhẹ", "Trung bình", "Nặng"))
   )
 
 ```
@@ -474,7 +489,117 @@ ban_luan_fast <- glue::glue(
 
 
 ```
+## Đặc điểm NPI 
+```{r}
+#| label: phan_tich_npiq_severity
+#| message: false
+#| warning: false
+#| results: asis
+#| fig-cap-location: top
 
+# 📦 Thống kê mô tả tổng điểm NPI-Q
+tbl_npiq_severity_total <- df %>%
+  summarise(
+    `Trung bình (SD)` = glue("{round(mean(npiq_severity_total, na.rm = TRUE), 1)} ± {round(sd(npiq_severity_total, na.rm = TRUE), 1)}"),
+    `Trung vị` = glue("{round(median(npiq_severity_total, na.rm = TRUE), 1)}"),
+    `Tứ phân vị (Q1 – Q3)` = glue("{round(quantile(npiq_severity_total, 0.25, na.rm = TRUE),1)} – {round(quantile(npiq_severity_total, 0.75, na.rm = TRUE),1)}"),
+    `Nhỏ nhất` = glue("{min(npiq_severity_total, na.rm = TRUE)}"),
+    `Lớn nhất` = glue("{max(npiq_severity_total, na.rm = TRUE)}")
+  ) %>%
+  pivot_longer(cols = everything(), names_to = "Chỉ số", values_to = "Giá trị")
+
+# 📄 Bảng flextable tổng điểm
+bang_npiq_severity_total <- ft_vn(tbl_npiq_severity_total) %>%
+  set_caption("Bảng mô tả tổng điểm NPI-Q (severity)") %>%
+  set_table_properties(width = 1, layout = "autofit")
+bang_npiq_severity_total
+
+# 📊 Biểu đồ histogram tổng điểm
+bieu_do_npiq_severity_total <- ggplot(df, aes(x = npiq_severity_total)) +
+  geom_histogram(binwidth = 2, fill = "#69b3a2", color = "black", boundary = 0) +
+  labs(x = "Tổng điểm NPI-Q", y = "Tần suất") +
+  theme_minimal(base_family = "Times New Roman")
+print(bieu_do_npiq_severity_total)
+
+# 📦 Bảng tần suất nhóm độ nặng
+tbl_npiq_group <- df %>%
+  filter(!is.na(npiq_severity_group)) %>%
+  count(npiq_severity_group) %>%
+  mutate(
+    `Tỷ lệ (%)` = round(n / sum(n) * 100, 1),
+    `Giá trị` = glue("{n} ({`Tỷ lệ (%)`}%)")
+  ) %>%
+  select(`Mức độ NPI-Q` = npiq_severity_group, `Giá trị`)
+
+# 📄 Bảng flextable nhóm độ nặng
+bang_npiq_severity_group <- ft_vn(tbl_npiq_group) %>%
+  set_caption("Bảng phân bố mức độ NPI-Q") %>%
+  set_table_properties(width = 1, layout = "autofit")
+bang_npiq_severity_group
+
+# 📉 Biểu đồ bar nhóm độ nặng
+bieu_do_npiq_severity_group <- ggplot(df, aes(x = npiq_severity_group, fill = npiq_severity_group)) +
+  geom_bar(width = 0.6, show.legend = FALSE) +
+  labs(x = "Mức độ NPI-Q", y = "Số lượng") +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.5, size = 4.5) +
+  theme_minimal(base_family = "Times New Roman")
+print(bieu_do_npiq_severity_group)
+
+# ✏️ Nhận xét bảng tổng điểm
+npiq_tb <- round(mean(df$npiq_severity_total, na.rm = TRUE), 1)
+npiq_sd <- round(sd(df$npiq_severity_total, na.rm = TRUE), 1)
+npiq_med <- median(df$npiq_severity_total, na.rm = TRUE)
+npiq_min <- min(df$npiq_severity_total, na.rm = TRUE)
+npiq_max <- max(df$npiq_severity_total, na.rm = TRUE)
+npiq_q1 <- round(quantile(df$npiq_severity_total, 0.25, na.rm = TRUE), 1)
+npiq_q3 <- round(quantile(df$npiq_severity_total, 0.75, na.rm = TRUE), 1)
+
+nhan_xet_bang_npiq_severity_total <- glue(
+  "**Nhận xét:** Tổng điểm NPI-Q trung bình là {npiq_tb} ± {npiq_sd}, ",
+  "trung vị {npiq_med}, từ {npiq_min} đến {npiq_max}, tứ phân vị từ {npiq_q1} – {npiq_q3}."
+)
+cat(nhan_xet_bang_npiq_severity_total, "\n\n")
+
+# ✏️ Nhận xét biểu đồ tổng điểm
+nhan_xet_bieu_do_npiq_severity_total <- glue(
+  "Biểu đồ cho thấy tổng điểm NPI-Q có xu hướng tập trung nhiều ở khoảng trung bình đến cao, ",
+  "phản ánh người bệnh có biểu hiện hành vi thần kinh đa dạng."
+)
+cat(nhan_xet_bieu_do_npiq_severity_total, "\n\n")
+
+# ✏️ Nhận xét bảng nhóm độ nặng
+tbl_npiq_top <- tbl_npiq_group %>%
+  arrange(desc(`Giá trị`)) %>%
+  slice(1)
+
+nhan_xet_bang_npiq_severity_group <- glue(
+  "Mức độ phổ biến nhất là **{tbl_npiq_top$`Mức độ NPI-Q`}**, chiếm tỷ lệ {tbl_npiq_top$`Giá trị`}."
+)
+cat(nhan_xet_bang_npiq_severity_group, "\n\n")
+
+# ✏️ Nhận xét biểu đồ nhóm độ nặng
+nhan_xet_bieu_do_npiq_severity_group <- glue(
+  "Biểu đồ cột cho thấy phân bố nhóm độ nặng NPI-Q không đồng đều, trong đó nhóm trung bình và nặng chiếm ưu thế."
+)
+cat(nhan_xet_bieu_do_npiq_severity_group, "\n\n")
+
+# 📚 Bàn luận tổng điểm
+ban_luan_npiq_severity_total <- glue(
+  "Tổng điểm NPI-Q cao cho thấy người bệnh có nhiều triệu chứng rối loạn hành vi – tâm thần. ",
+  "Điều này phù hợp với các nghiên cứu trước đây về sa sút trí tuệ, trong đó triệu chứng như hoang tưởng, ảo giác, ",
+  "và trầm cảm thường gặp ở giai đoạn trung bình đến nặng. Cần có can thiệp sớm để giảm thiểu gánh nặng hành vi."
+)
+cat(ban_luan_npiq_severity_total, "\n\n")
+
+# 📚 Bàn luận nhóm độ nặng
+ban_luan_npiq_severity_group <- glue(
+  "Phân nhóm độ nặng NPI-Q giúp phân loại rõ hơn về mức độ ảnh hưởng hành vi. ",
+  "Những người thuộc nhóm 'Nặng' cần đánh giá chuyên sâu và có thể cần dùng thuốc hướng thần hoặc trị liệu tâm lý. ",
+  "Tỷ lệ nhóm 'Trung bình – Nặng' cao là chỉ dấu quan trọng cho chiến lược hỗ trợ toàn diện."
+)
+cat(ban_luan_npiq_severity_group)
+
+```
 
 
 
@@ -584,6 +709,65 @@ bieu_do_fast
 
 ##### `r nhan_xet_fast_bieu_do` 
 
+## Đặc điển NPI-Q
+Bảng 
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| paged-print: false
+bang_npiq_severity_total
+```
+
+##### `r nhan_xet_bang_npiq_severity_total`
+
+Biểu đồ 
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| paged-print: false
+bieu_do_npiq_severity_total
+```
+
+##### `r nhan_xet_bieu_do_npiq_severity_total`
+
+Bảng flextable nhóm độ nặng
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| paged-print: false
+bang_npiq_severity_group
+```
+
+##### `r nhan_xet_bang_npiq_severity_group`
+
+
+
+Biểu đồ bar nhóm độ nặng
+
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| paged-print: false
+bieu_do_npiq_severity_group
+```
+##### `r nhan_xet_bieu_do_npiq_severity_group`
+
+
+
+
+
+
+
+
+
 
 
 # BÀN LUẬN
@@ -655,10 +839,36 @@ Việc sử dụng FAST song song với MMSE và thang ZBI trong nghiên cứu c
 
 Tổng thể, phân loại người bệnh theo FAST tại Đơn vị Trí nhớ và Sa sút trí tuệ – Bệnh viện 30-4 cho thấy sự phân bố trải rộng trên toàn bộ phổ bệnh, đồng thời phản ánh thực trạng phát hiện, chẩn đoán và điều trị người bệnh sa sút trí tuệ tại Việt Nam hiện nay. Những kết quả này không chỉ có ý nghĩa thống kê mà còn cung cấp căn cứ lâm sàng quan trọng cho việc thiết kế các mô hình chăm sóc hiệu quả, tập trung vào can thiệp sớm, hỗ trợ chức năng và đào tạo người chăm sóc.
 
+### Bàn luận NPI-Q 
+
+::: {custom-style="chu_xanh"}
+`r ban_luan_npiq_severity_total`
+:::
+
+
+::: {custom-style="chu_xanh"}
+`r ban_luan_npiq_severity_total`
+:::
+
+## Bàn luận về tổng điểm và mức độ NPI-Q
+
+Trong nghiên cứu tại **Đơn vị trí nhớ và sa sút trí tuệ – Bệnh viện 30-4**, đối tượng là bệnh nhân ngoại trú được chẩn đoán sa sút trí tuệ ở nhiều mức độ khác nhau. Điểm trung bình NPI-Q (Neuropsychiatric Inventory – Questionnaire) được ghi nhận là **18,1 ± 6,5**, với trung vị 20, tứ phân vị từ 17 – 21, giá trị nhỏ nhất là 0 và lớn nhất là 24. Đây là mức điểm **cao hơn so với nhiều nghiên cứu quốc tế trên bệnh nhân Alzheimer ngoại trú**, phản ánh **gánh nặng hành vi tâm thần đáng kể** trong quần thể nghiên cứu [@kaufer2000npiq].
+
+Công cụ NPI-Q được phát triển để đánh giá nhanh 12 triệu chứng hành vi – tâm thần thường gặp ở người sa sút trí tuệ, bao gồm hoang tưởng, ảo giác, kích động, trầm cảm, lo âu, thay đổi cảm xúc, thờ ơ, mất kiểm soát, kích thích ăn uống, hành vi không phù hợp, thay đổi sở thích và giấc ngủ [@kaufer2000npiq]. Trong nghiên cứu này, phần lớn người bệnh đạt điểm ở mức **trung bình đến cao**, biểu hiện rõ rệt qua biểu đồ histogram tập trung ở vùng điểm 17–24.
+
+Đặc biệt, kết quả phân nhóm mức độ cho thấy **81,8% bệnh nhân thuộc nhóm "Nặng"**, trong khi chỉ có 9,1% ở nhóm "Trung bình" và 9,1% ở nhóm "Không hoặc rất nhẹ". Tỷ lệ cao ở nhóm nặng này cho thấy **người bệnh ngoại trú vẫn có thể có gánh nặng hành vi rất lớn**, làm tăng nguy cơ sa sút nhanh chóng, giảm chất lượng sống, và tăng gánh nặng lên người chăm sóc. Điều này phù hợp với các nghiên cứu cho thấy **NPI-Q là chỉ báo tốt cho cả tiến triển lâm sàng lẫn gánh nặng chăm sóc** [@trzepacz2013npiq].
+
+Một số nghiên cứu trong nước cũng ghi nhận mức điểm NPI-Q cao trong nhóm bệnh nhân điều trị nội trú hoặc tại khoa Tâm thần – Lão khoa, nhưng kết quả của nghiên cứu này nhấn mạnh rằng **gánh nặng hành vi ở nhóm ngoại trú không hề thấp hơn**. Theo Nguyễn và cộng sự (2022), tại TP.HCM, 67% người bệnh có ≥3 triệu chứng hành vi đáng kể, và hơn 50% người chăm sóc gặp khó khăn trong quản lý [@nguyen2022npsvn].
+
+Từ góc độ can thiệp, **các triệu chứng hành vi – tâm thần cần được tầm soát sớm và can thiệp đa mô thức**: bao gồm tư vấn tâm lý, hỗ trợ giáo dục người chăm sóc, và sử dụng thuốc hướng thần khi cần thiết. Nghiên cứu của Cummings và cộng sự cho thấy điều trị hành vi đúng lúc có thể cải thiện đáng kể chất lượng sống cho người bệnh và giảm chi phí điều trị lâu dài [@cummings2002behavioral].
+
+Tóm lại, **kết quả điểm số và phân nhóm NPI-Q tại Bệnh viện 30-4 cho thấy mức độ nghiêm trọng của triệu chứng hành vi ở người bệnh sa sút trí tuệ ngoại trú**, từ đó nhấn mạnh **vai trò của việc lồng ghép công cụ NPI-Q vào quy trình tầm soát thường quy**. Việc đánh giá định kỳ không chỉ giúp phát hiện nguy cơ sớm mà còn hỗ trợ lựa chọn chiến lược điều trị phù hợp, giảm gánh nặng cho cả người bệnh và hệ thống y tế.
+
+
+
 ## Tài liệu tham khảo
 
 
-Kết quả nghiên cứu cho thấy cả hai nhóm can 
 
 
 
@@ -673,9 +883,9 @@ KHUYẾN NGHỊ
 
 
 Từ kết quả của công trình nghiên cứu chúng tôi đề xuất một số ý kiến sau:
-1. 	Cần phổ biến rộng rãi kiến thức về bệnh lý MNKTT trong cộng đồng để phòng ngừa và điều trị sớm.
-2. Có thể áp dụng rộng rãi hơn phương pháp điều trị nhĩ châm kết hợp xoa bóp bấm huyệt trong điều trị bệnh lý MNKTT.
-3. 	Cần mở rộng nghiên cứu trên số lượng bệnh nhân lớn hơn, thời gian nghiên cứu dài hơn để có thể đánh giá một cách hoàn chỉnh về phương pháp điều trị nhĩ châm kết hợp xoa bóp bấm huyệt trong điều trị bệnh lý MNKTT, các yếu tố liên quan cũng như theo dõi các tác dụng không muốn của phương pháp điều trị trên các chỉ số lâm sàng và cận lâm sàng.
+1. 	Cần 
+2. Có thể áp dụng 
+3. 	Cần mở rộng nghiên cứu .
 
 
 
