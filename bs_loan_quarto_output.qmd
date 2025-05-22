@@ -602,6 +602,126 @@ cat(ban_luan_npiq_severity_group)
 ```
 
 
+## Đặc điểm nhân khẩu học người chăm sóc
+
+```{r}
+# 📦 Tổng hợp bảng đặc điểm người chăm sóc và nhận xét inline
+
+# 📊 Thống kê cơ bản
+tuoi_tb <- round(mean(df$tuoi_nguoi_cham_soc, na.rm = TRUE), 1)
+tuoi_sd <- round(sd(df$tuoi_nguoi_cham_soc, na.rm = TRUE), 1)
+tong_n <- nrow(df)
+
+# 🎂 Nhóm tuổi
+tbl_nhom_tuoi <- df %>%
+  count(nhom_tuoi_nguoi_cham_soc) %>%
+  mutate(Ti_le = round(n / sum(n) * 100, 1),
+         Gia_tri = glue("{n} ({Ti_le}%)"),
+         Bien = "Nhóm tuổi người chăm sóc") %>%
+  rename(Phan_loai = nhom_tuoi_nguoi_cham_soc) %>%
+  select(Bien, Phan_loai, Gia_tri)
+
+# ⚧️ Giới tính
+tbl_gioi <- df %>%
+  count(gioi_tinh_nguoi_cham_soc) %>%
+  mutate(Ti_le = round(n / sum(n) * 100, 1),
+         Gia_tri = glue("{n} ({Ti_le}%)"),
+         Bien = "Giới tính người chăm sóc") %>%
+  rename(Phan_loai = gioi_tinh_nguoi_cham_soc) %>%
+  select(Bien, Phan_loai, Gia_tri)
+n_nam <- tbl_gioi$n[tbl_gioi$Phan_loai == "Nam"]
+n_nu <- tbl_gioi$n[tbl_gioi$Phan_loai == "Nữ"]
+
+# 🎓 Học vấn
+tbl_hoc_van <- df %>%
+  count(hoc_van) %>%
+  mutate(Ti_le = round(n / sum(n) * 100, 1),
+         Gia_tri = glue("{n} ({Ti_le}%)"),
+         Bien = "Trình độ học vấn") %>%
+  rename(Phan_loai = hoc_van) %>%
+  select(Bien, Phan_loai, Gia_tri)
+
+# 💼 Nghề nghiệp
+tbl_nghe <- df %>%
+  count(nghe_nghiep) %>%
+  mutate(Ti_le = round(n / sum(n) * 100, 1),
+         Gia_tri = glue("{n} ({Ti_le}%)"),
+         Bien = "Nghề nghiệp") %>%
+  rename(Phan_loai = nghe_nghiep) %>%
+  select(Bien, Phan_loai, Gia_tri)
+
+# 💍 Tình trạng hôn nhân
+tbl_hon_nhan <- df %>%
+  count(tinh_trang_hon_nhan) %>%
+  mutate(Ti_le = round(n / sum(n) * 100, 1),
+         Gia_tri = glue("{n} ({Ti_le}%)"),
+         Bien = "Tình trạng hôn nhân") %>%
+  rename(Phan_loai = tinh_trang_hon_nhan) %>%
+  select(Bien, Phan_loai, Gia_tri)
+
+# 👪 Mối quan hệ với người bệnh
+tbl_mqh <- df %>%
+  count(moi_quan_he_voi_nguoi_benh) %>%
+  mutate(Ti_le = round(n / sum(n) * 100, 1),
+         Gia_tri = glue("{n} ({Ti_le}%)"),
+         Bien = "Mối quan hệ với người bệnh") %>%
+  rename(Phan_loai = moi_quan_he_voi_nguoi_benh) %>%
+  select(Bien, Phan_loai, Gia_tri)
+
+# ⏳ Tổng thời gian chăm sóc
+tbl_time <- df %>%
+  count(tong_thoi_gian_cham_soc_tu_luc_benh) %>%
+  mutate(Ti_le = round(n / sum(n) * 100, 1),
+         Gia_tri = glue("{n} ({Ti_le}%)"),
+         Bien = "Tổng thời gian chăm sóc") %>%
+  rename(Phan_loai = tong_thoi_gian_cham_soc_tu_luc_benh) %>%
+  select(Bien, Phan_loai, Gia_tri)
+
+# 💰 Thu nhập
+tbl_tn <- df %>%
+  count(lien_quan_toi_thu_nhap) %>%
+  mutate(Ti_le = round(n / sum(n) * 100, 1),
+         Gia_tri = glue("{n} ({Ti_le}%)"),
+         Bien = "Liên quan tới thu nhập") %>%
+  rename(Phan_loai = lien_quan_toi_thu_nhap) %>%
+  select(Bien, Phan_loai, Gia_tri)
+
+# 📋 Gộp tất cả bảng lại
+tbl_dac_diem_ng_cham_soc <- bind_rows(
+  tbl_nhom_tuoi, tbl_gioi, tbl_hoc_van, tbl_nghe,
+  tbl_hon_nhan, tbl_mqh, tbl_time, tbl_tn
+)
+
+# 🧾 Tạo bảng flextable đẹp
+ft_dac_diem_ng_cham_soc <- flextable(tbl_dac_diem_ng_cham_soc) %>%
+  merge_v(j = "Bien") %>%
+  valign(j = "Bien", valign = "top") %>%
+  set_header_labels(Bien = "Đặc điểm", Phan_loai = "Phân loại", Gia_tri = "Giá trị") %>%
+  autofit() %>%
+  align(align = "center", part = "all") %>%
+  fontsize(size = 12, part = "all") %>%
+  font(fontname = "Times New Roman", part = "all") %>%
+  set_caption("Bảng đặc điểm người chăm sóc người bệnh sa sút trí tuệ") %>%
+  set_table_properties(width = 1, layout = "autofit")
+
+# 📝 Nhận xét dạng đoạn văn
+# ✏️ Nhận xét đầy đủ (dùng glue_collapse để nối chuỗi)
+nhan_xet_dac_diem_nguoi_cham_soc <- glue::glue_collapse(c(
+  glue("Tuổi trung bình của người chăm sóc là {tuoi_tb} ± {tuoi_sd} tuổi, cho thấy đa phần thuộc nhóm trung niên – cao tuổi, vốn thường là cha mẹ hoặc con cái lớn tuổi của người bệnh."),
+  glue("Về giới tính, trong tổng số {tong_n} người chăm sóc, có {n_nam} nam giới (chiếm khoảng {round(n_nam/tong_n*100, 1)}%) và {n_nu} nữ giới (chiếm {round(n_nu/tong_n*100, 1)}%), phản ánh thực tế phụ nữ thường đảm nhiệm vai trò chăm sóc trong gia đình tại Việt Nam."),
+  "Tỷ lệ người có trình độ tiểu học và trung học chiếm ưu thế cho thấy cần xây dựng các tài liệu hỗ trợ đơn giản, dễ hiểu, đặc biệt nếu triển khai tại cộng đồng.",
+  "Nghề nghiệp của người chăm sóc chủ yếu là nội trợ và lao động phổ thông – đây là nhóm dễ bị tổn thương cả về kinh tế lẫn tinh thần khi chăm sóc kéo dài.",
+  "Tình trạng hôn nhân và mối quan hệ với người bệnh phần lớn là kết hôn và quan hệ ruột thịt, điều này có thể làm tăng sự gắn bó nhưng cũng làm tăng cảm xúc tiêu cực nếu bệnh tiến triển nặng.",
+  "Tổng thời gian chăm sóc phổ biến nhất là từ 1 đến 5 năm, và đáng chú ý có nhiều trường hợp kéo dài trên 5 năm, đặt ra yêu cầu hỗ trợ lâu dài.",
+  "Thu nhập phần lớn dưới 10 triệu đồng/tháng, điều này củng cố nhận định rằng gánh nặng tài chính là một yếu tố cần được đặc biệt quan tâm trong các chính sách hỗ trợ người chăm sóc.",
+  "Từ những số liệu trên, tôi cho rằng nên sớm xây dựng các chương trình can thiệp tâm lý – xã hội và đào tạo kiến thức phù hợp với trình độ, hoàn cảnh của người chăm sóc, đồng thời có chính sách hỗ trợ tài chính cụ thể tại các địa phương."
+), sep = " ")
+
+
+
+```
+
+
 
 ::: {custom-style="CAN GIUA DAM 14 ONE"}
 ĐẶT VẤN ĐỀ
@@ -760,12 +880,20 @@ bieu_do_npiq_severity_group
 ```
 ##### `r nhan_xet_bieu_do_npiq_severity_group`
 
+## Đặc diểm nhân khẩu người chăm sóc
 
 
+Bảng 
 
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| paged-print: false
+ft_dac_diem_ng_cham_soc
+```
 
-
-
+##### `r nhan_xet_dac_diem_nguoi_cham_soc `
 
 
 
@@ -866,7 +994,23 @@ Tóm lại, **kết quả điểm số và phân nhóm NPI-Q tại Bệnh viện
 
 
 
-## Tài liệu tham khảo
+### Bàm luận về đặc điểm nhân khẩu người chăm sóc
+
+Trong nghiên cứu tại Đơn vị Trí nhớ và Sa sút trí tuệ tại TP. Hồ Chí Minh, người chăm sóc chủ yếu là thân nhân trực tiếp của bệnh nhân, chủ yếu sống tại đô thị – nơi có mức độ tiếp cận y tế cao. Tuổi trung bình của người chăm sóc là 51,2 ± 18,2 tuổi, chủ yếu thuộc nhóm trung niên và người cao tuổi, phản ánh thực tế tại Việt Nam khi vai trò chăm sóc thường do vợ/chồng hoặc con cái trưởng thành đảm nhiệm.
+
+Tỷ lệ nữ giới chiếm 57,6% tổng số người chăm sóc, phù hợp với xu hướng toàn cầu và trong nước khi phụ nữ thường đảm nhận vai trò chăm sóc do yếu tố xã hội – văn hóa truyền thống [@nguyenthihongvan2022; @ferretti2018]. Một báo cáo tại Hoa Kỳ cho biết có đến 66% người chăm sóc là nữ [@alz2023report].
+
+Trình độ học vấn của nhóm chăm sóc khá cao, với 54,5% tốt nghiệp đại học/cao đẳng và 21,2% sau đại học – điều này phản ánh đặc điểm dân cư thành thị tại TP.HCM, nơi tỷ lệ người có trình độ đại học cao hơn mức trung bình toàn quốc [@nguyenthilan2021]. Tuy vậy, vẫn có gần 25% chỉ học hết trung học, nhấn mạnh nhu cầu phát triển các chương trình giáo dục sức khỏe phù hợp với đa dạng trình độ.
+
+Nghề nghiệp chủ yếu gồm nhóm lao động văn phòng (36,4%) và nghỉ hưu (39,4%). Tuy đây là nhóm có thời gian linh hoạt để chăm sóc, nhưng cũng dễ gặp áp lực tinh thần khi không có hỗ trợ xã hội tương ứng [@truongminhtam2020]. Đáng chú ý là 9,1% là nội trợ và 12,1% lao động tay chân – nhóm có nguy cơ tổn thương kinh tế nếu phải chăm sóc kéo dài [@phamminhtrang2019].
+
+Về quan hệ xã hội, phần lớn người chăm sóc là vợ/chồng (42,4%) hoặc con ruột (48,5%), trong đó 69,7% đang trong tình trạng kết hôn. Mối quan hệ huyết thống góp phần gia tăng mức độ gắn bó, nhưng đồng thời cũng khiến người chăm sóc dễ bị tổn thương tâm lý khi bệnh tiến triển [@livingston2020].
+
+Tổng thời gian chăm sóc phổ biến là từ 1–5 năm (51,5%) và >5 năm (21,2%), nhấn mạnh đặc điểm mạn tính của sa sút trí tuệ và yêu cầu hỗ trợ dài hạn [@nguyenvantung2021]. Trong khi đó, 90,9% người chăm sóc có thu nhập >10 triệu đồng/tháng – một mức khá tại đô thị, nhưng chưa đảm bảo bù đắp toàn bộ chi phí chăm sóc (bao gồm thuốc, thiết bị hỗ trợ, và chi phí gián tiếp) [@wimo2018; @nguyenthianh2023].
+
+Từ các kết quả này, chúng tôi đề xuất cần xây dựng các chương trình hỗ trợ toàn diện cho người chăm sóc, bao gồm: can thiệp tâm lý, đào tạo kỹ năng, cung cấp tài liệu phù hợp với trình độ học vấn, hỗ trợ tài chính tại cộng đồng, cũng như phát triển dịch vụ chăm sóc thay thế tạm thời nhằm giúp giảm tải gánh nặng cho người chăm sóc lâu dài [@tranthibichngoc2020].
+
+
 
 
 
