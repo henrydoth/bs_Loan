@@ -1,5 +1,14 @@
+# Bỏ qua file và thư mục mặc định của RStudio
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+
+# Bỏ qua thư mục chứa kết quả đầu ra của Quarto
 bs_loan_quarto_output_files/
+*.docx
+
+
+# Bỏ qua file dữ liệu gốc trong thư mục source
+source/*.sav
+source/*.csv

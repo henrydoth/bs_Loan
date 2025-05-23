@@ -978,7 +978,7 @@ Tổng thể, phân loại người bệnh theo FAST tại Đơn vị Trí nhớ
 `r ban_luan_npiq_severity_total`
 :::
 
-## Bàn luận về tổng điểm và mức độ NPI-Q
+### Bàn luận về tổng điểm và mức độ NPI-Q
 
 Trong nghiên cứu tại **Đơn vị trí nhớ và sa sút trí tuệ – Bệnh viện 30-4**, đối tượng là bệnh nhân ngoại trú được chẩn đoán sa sút trí tuệ ở nhiều mức độ khác nhau. Điểm trung bình NPI-Q (Neuropsychiatric Inventory – Questionnaire) được ghi nhận là **18,1 ± 6,5**, với trung vị 20, tứ phân vị từ 17 – 21, giá trị nhỏ nhất là 0 và lớn nhất là 24. Đây là mức điểm **cao hơn so với nhiều nghiên cứu quốc tế trên bệnh nhân Alzheimer ngoại trú**, phản ánh **gánh nặng hành vi tâm thần đáng kể** trong quần thể nghiên cứu [@kaufer2000npiq].
 
@@ -1012,7 +1012,8 @@ Từ các kết quả này, chúng tôi đề xuất cần xây dựng các chư
 
 
 
-
+### Cập nhật github
+23/5 10:55 own room tôi đã chỉnh readme muốn up lên
 
 
 
