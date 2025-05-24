@@ -1,17 +1,11 @@
-# Bỏ qua các tệp và thư mục mặc định của RStudio
-.Rproj.user/
-.Rhistory
-.RData
-.Ruserdata
-*.Rproj
-# === RStudio ===
+# === Bỏ qua các tệp và thư mục mặc định của RStudio ===
 .Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
 *.Rproj
 
-# === Quarto output ===
+# === Output của Quarto ===
 bs_loan_quarto_output_files/
 _output/
 *.docx
@@ -22,11 +16,13 @@ _output/
 *.csv
 *.sav
 
-# === Bỏ qua toàn bộ thư mục source/ trừ file .bib ===
+# === Giữ lại duy nhất file .bib trong thư mục source/ ===
+source/*
 source/**
+!source/
 !source/*.bib
 
-# === Thư mục hình ảnh & cache ===
+# === Hình ảnh & thư mục cache ===
 image/tmp/
 image/pdf/
 image/png/
@@ -37,26 +33,9 @@ __pycache__/
 # === Thư mục backup ===
 bak/
 
-# Bỏ qua kết quả đầu ra của Quarto
-bs_loan_quarto_output_files/
-_output/
+# === Ignore Word input mẫu nếu có ===
 *.docx
-*.pdf
-*.html
 
-# Bỏ qua toàn bộ file trong thư mục source/
-source/*
-
-# Ngoại lệ: giữ lại file lvts_bsloan.bib
-!source/lvts_bsloan.bib
-
-# Bỏ qua hình ảnh tạm và thư mục cache
-image/tmp/
-image/pdf/
-image/png/
-.Rcache/
-_cache/
-__pycache__/
-
-# Bỏ qua thư mục bak (backup)
-bak/
+# === Nếu dùng Python hoặc Jupyter thêm các dòng sau ===
+*.ipynb
+.ipynb_checkpoints/
