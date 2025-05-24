@@ -1,14 +1,30 @@
-# Bỏ qua file và thư mục mặc định của RStudio
-.Rproj.user
+# Bỏ qua các tệp và thư mục mặc định của RStudio
+.Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
+*.Rproj
 
-# Bỏ qua thư mục chứa kết quả đầu ra của Quarto
+# Bỏ qua kết quả đầu ra của Quarto
 bs_loan_quarto_output_files/
+_output/
 *.docx
+*.pdf
+*.html
 
+# Bỏ qua toàn bộ file trong thư mục source/
+source/*
 
-# Bỏ qua file dữ liệu gốc trong thư mục source
-source/*.sav
-source/*.csv
+# Ngoại lệ: giữ lại file lvts_bsloan.bib
+!source/lvts_bsloan.bib
+
+# Bỏ qua hình ảnh tạm và thư mục cache
+image/tmp/
+image/pdf/
+image/png/
+.Rcache/
+_cache/
+__pycache__/
+
+# Bỏ qua thư mục bak (backup)
+bak/
