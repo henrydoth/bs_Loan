@@ -1014,6 +1014,7 @@ Từ các kết quả này, chúng tôi đề xuất cần xây dựng các chư
 
 ### Cập nhật github
 23/5 10:55 own room tôi đã chỉnh readme muốn up lên
+24/5 19:27, chỉnh ignore giở muốn đẩy lên git
 
 
 
