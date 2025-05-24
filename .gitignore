@@ -4,6 +4,38 @@
 .RData
 .Ruserdata
 *.Rproj
+# === RStudio ===
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# === Quarto output ===
+bs_loan_quarto_output_files/
+_output/
+*.docx
+*.pdf
+*.html
+
+# === Dữ liệu & file tạm ===
+*.csv
+*.sav
+
+# === Bỏ qua toàn bộ thư mục source/ trừ file .bib ===
+source/**
+!source/*.bib
+
+# === Thư mục hình ảnh & cache ===
+image/tmp/
+image/pdf/
+image/png/
+.Rcache/
+_cache/
+__pycache__/
+
+# === Thư mục backup ===
+bak/
 
 # Bỏ qua kết quả đầu ra của Quarto
 bs_loan_quarto_output_files/
